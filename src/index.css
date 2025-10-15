@@ -1,1 +1,74 @@
 @import "tailwindcss";
+
+/* Thème - tokens sémantiques */
+:root {
+  /* Surfaces */
+  --surface: #0b1020;
+  --surface-2: #111831;
+  --surface-3: #0f152b;
+  --card: #10172a;
+  --muted: #9aa3b2;
+
+  /* Texte */
+  --text: #e9edf5;
+  --text-muted: #b9c1cf;
+
+  /* Accent (violet) */
+  --accent: #7c3aed; /* primary */
+  --accent-600: #6d28d9; /* hover */
+  --accent-700: #5b21b6; /* active */
+  --ring: 0 0 0 3px rgba(124, 58, 237, 0.35);
+
+  /* Bordures */
+  --border: #24304b;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --surface: #ffffff;
+    --surface-2: #f6f7fb;
+    --surface-3: #eef1f8;
+    --card: #ffffff;
+
+    --text: #0b1020;
+    --text-muted: #4a5568;
+
+    --border: #e5e7ef;
+  }
+}
+
+/* Forçage dark via data-theme */
+[data-theme="dark"] {
+  --surface: #0b1020;
+  --surface-2: #111831;
+  --surface-3: #0f152b;
+  --card: #10172a;
+  --text: #e9edf5;
+  --text-muted: #b9c1cf;
+  --border: #24304b;
+}
+
+/* Utilitaires */
+.container-px {
+  @apply px-4 sm:px-6 lg:px-8;
+}
+.max-w-content {
+  @apply max-w-6xl mx-auto;
+}
+
+/* Focus */
+.btn:focus-visible {
+  box-shadow: var(--ring);
+  outline: 0;
+}
+
+/* Scroll reveal léger (optionnel) */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s, transform 0.4s;
+}
+.reveal.show {
+  opacity: 1;
+  transform: translateY(0);
+}
