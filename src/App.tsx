@@ -203,7 +203,7 @@ function HeroCreatorMessage() {
 
         <p className="mt-4 max-w-xl text-lg opacity-80">
           Faites découvrir l’histoire et les valeurs de votre projet à la
-          communauté qui vous entoure. Gratuitement.
+          communauté qui vous entoure. 100% gratuit pour un web plus humain.
         </p>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -447,7 +447,7 @@ export default function App() {
           {/* BOUTON ENREGISTRER CENTRÉ */}
           <a
             href="#cta"
-            className="absolute left-1/2 -translate-x-1/2 inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-2.5 text-white font-semibold shadow-lg hover:opacity-90"
+            className="absolute left-1/2 -translate-x-1/2 inline-flex items-center justify-center rounded-2xl bg-[#7266EE] px-5 py-2.5 text-white font-semibold shadow-lg hover:opacity-90"
           >
             🎙️ Enregistrer ma publicité
             <span className="sr-only">ouvrir la section d’enregistrement</span>
@@ -458,7 +458,6 @@ export default function App() {
         </div>
       </header>
       <HeroCreatorMessage />
-
       {/* Alternance image/texte — LA SOLUTION */}
       <section
         id="solution"
@@ -515,7 +514,6 @@ export default function App() {
           />
         </div>
       </section>
-
       {/* Étapes en bande contrastée */}
       <section id="etapes" className="bg-primary/10">
         <div className="mx-auto max-w-7xl px-6 py-16">
@@ -552,7 +550,6 @@ export default function App() {
           </div>
         </div>
       </section>
-
       {/* Exemples (carte centrale) */}
       <section
         id="exemples"
@@ -580,13 +577,50 @@ export default function App() {
           />
         </div>
       </section>
+      <section
+        id="inscription"
+        className="relative overflow-hidden bg-primary/10"
+      >
+        <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+          <h3 className="text-3xl md:text-4xl font-extrabold">
+            Votre publicité audio{" "}
+            <span class="underline">vraiment gratuite</span> vous attend.
+          </h3>
+          <p className="mt-2 opacity-85">
+            Renseignez votre contact et touchez des milliers de clients dans
+            votre quartier, simplement avec votre voix.
+          </p>
 
+          {/* === FORMULAIRE D'INSCRIPTION === */}
+          <form className="mt-8 flex flex-col gap-4">
+            <input
+              type="text"
+              placeholder="Votre email ou téléphone"
+              className="rounded-lg border-white/20 bg-white/5 p-3 text-center"
+              // L'attribut "inputMode" aide les mobiles à afficher le bon clavier
+              // "text" est un choix neutre et sûr.
+              inputMode="text"
+              required
+            />
+            {/* Vous pouvez aussi demander le téléphone via un champ type="tel" 
+        ou utiliser le Social Login de Supabase (Google, etc.) pour simplifier.
+      */}
+            <button
+              type="submit"
+              className="rounded-2xl bg-primary px-7 py-3 text-white font-semibold shadow-lg hover:opacity-90"
+            >
+              📢 Créer mon profil
+            </button>
+          </form>
+          {/* ============================== */}
+        </div>
+      </section>
       {/* Gros CTA final */}
       <section id="cta" className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/30 via-primary/10 to-transparent" />
         <div className="mx-auto max-w-5xl px-6 py-20 text-center">
           <h3 className="text-3xl md:text-4xl font-extrabold">
-            Prêt à faire entendre votre histoire ?
+            Prêt à faire entendre votre histoire à Lille ?
           </h3>
           <p className="mt-2 opacity-85">
             Votre voix a de la valeur. Il est temps de la faire entendre.
@@ -599,7 +633,6 @@ export default function App() {
           </a>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm opacity-80 md:flex-row">
