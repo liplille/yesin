@@ -1,35 +1,31 @@
+// src/components/ThemeToggle.tsx
 import { useEffect, useState } from "react";
 
-function getSystemPref(): "light" | "dark" {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-}
-
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">(
-    (localStorage.getItem("theme") as "light" | "dark") || getSystemPref()
-  );
+  const [mode, setMode] = useState<"light" | "dark">(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light" || saved === "dark") return saved;
+    // fallback: préférence système
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  });
 
   useEffect(() => {
-    const html = document.documentElement;
-    if (theme === "dark") html.setAttribute("data-theme", "dark");
-    else html.removeAttribute("data-theme");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+    const root = document.documentElement; // <html>
+    root.classList.toggle("dark", mode === "dark");
+    localStorage.setItem("theme", mode);
+  }, [mode]);
 
   return (
     <button
       type="button"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="btn inline-flex items-center gap-2 rounded-xl border border-[--border] bg-[--surface-2] px-3 py-2 text-sm text-[--text] hover:bg-[--surface-3] transition"
+      className="rounded-xl border px-3 py-1 text-sm hover:bg-black/5 dark:hover:bg-white/10"
+      onClick={() => setMode((m) => (m === "dark" ? "light" : "dark"))}
       aria-label="Basculer le thème"
       title="Basculer le thème"
     >
-      <span className="i">{theme === "dark" ? "🌙" : "☀️"}</span>
-      <span className="hidden sm:inline">
-        {theme === "dark" ? "Sombre" : "Clair"}
-      </span>
+      {mode === "dark" ? "🌙 Sombre" : "☀️ Clair"}
     </button>
   );
 }

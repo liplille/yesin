@@ -1,74 +1,43 @@
+/* 1) Active Tailwind v4 */
 @import "tailwindcss";
 
-/* Thème - tokens sémantiques */
+/* 2) Déclare tes tokens de thème (clairs par défaut) */
+@theme {
+  /* Palette marque */
+  --color-brand-50: oklch(0.97 0.01 280);
+  --color-brand-100: oklch(0.93 0.02 280);
+  --color-brand-200: oklch(0.87 0.04 280);
+  --color-brand-300: oklch(0.8 0.06 280);
+  --color-brand-400: oklch(0.73 0.08 280);
+  --color-brand-500: oklch(0.66 0.1 280); /* principal */
+  --color-brand-600: oklch(0.58 0.1 280);
+  --color-brand-700: oklch(0.5 0.09 280);
+  --color-brand-800: oklch(0.43 0.08 280);
+  --color-brand-900: oklch(0.36 0.07 280);
+
+  /* Alias pratiques */
+  --color-primary: var(--color-brand-500);
+  --color-bg: white;
+  --color-fg: black;
+  --radius-xl: 1rem;
+}
+
+/* 3) Déclare la variante dark (stratégie par classe .dark sur <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 4) Overrides en mode sombre */
+:root.dark {
+  --color-bg: oklch(0.16 0.02 265);
+  --color-fg: oklch(0.97 0.01 265);
+  --color-primary: var(--color-brand-400);
+}
+
+/* (Optionnel) Typo + reset légers */
 :root {
-  /* Surfaces */
-  --surface: #0b1020;
-  --surface-2: #111831;
-  --surface-3: #0f152b;
-  --card: #10172a;
-  --muted: #9aa3b2;
-
-  /* Texte */
-  --text: #e9edf5;
-  --text-muted: #b9c1cf;
-
-  /* Accent (violet) */
-  --accent: #7c3aed; /* primary */
-  --accent-600: #6d28d9; /* hover */
-  --accent-700: #5b21b6; /* active */
-  --ring: 0 0 0 3px rgba(124, 58, 237, 0.35);
-
-  /* Bordures */
-  --border: #24304b;
+  color-scheme: light dark;
 }
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --surface: #ffffff;
-    --surface-2: #f6f7fb;
-    --surface-3: #eef1f8;
-    --card: #ffffff;
-
-    --text: #0b1020;
-    --text-muted: #4a5568;
-
-    --border: #e5e7ef;
-  }
-}
-
-/* Forçage dark via data-theme */
-[data-theme="dark"] {
-  --surface: #0b1020;
-  --surface-2: #111831;
-  --surface-3: #0f152b;
-  --card: #10172a;
-  --text: #e9edf5;
-  --text-muted: #b9c1cf;
-  --border: #24304b;
-}
-
-/* Utilitaires */
-.container-px {
-  @apply px-4 sm:px-6 lg:px-8;
-}
-.max-w-content {
-  @apply max-w-6xl mx-auto;
-}
-
-/* Focus */
-.btn:focus-visible {
-  box-shadow: var(--ring);
-  outline: 0;
-}
-
-/* Scroll reveal léger (optionnel) */
-.reveal {
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.4s, transform 0.4s;
-}
-.reveal.show {
-  opacity: 1;
-  transform: translateY(0);
+html,
+body,
+#root {
+  height: 100%;
 }
