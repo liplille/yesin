@@ -1,4 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  PlayIcon,
+  PauseIcon,
+  ForwardIcon,
+  BackwardIcon,
+} from "@heroicons/react/24/solid";
 import "./index.css";
 
 /* === IMPORTS ASSETS (depuis src/assets) === */
@@ -172,8 +178,12 @@ function CreatorMessageButton() {
       aria-label="La radio, en vrai"
       title="La radio, en vrai"
     >
-      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white text-[11px]">
-        {playing ? "⏸" : "▶"}
+      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white">
+        {playing ? (
+          <PauseIcon className="h-3 w-3" />
+        ) : (
+          <PlayIcon className="h-3 w-3" />
+        )}
       </span>
       <span>La radio, en vrai</span>
 
@@ -371,31 +381,39 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
         </div>
 
         {/* Commandes */}
+        {/* Commandes */}
         <div className="flex flex-shrink-0 items-center gap-2">
           <button
             onClick={prev}
-            className="h-10 w-10 rounded-full border border-white/10 hover:bg-white/10"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 hover:bg-white/10"
             aria-label="Piste précédente"
             title="Piste précédente"
           >
-            ⏮
+            {/* Icône Précédent */}
+            <BackwardIcon className="h-5 w-5" />
           </button>
           <button
             onClick={playPause}
-            className="h-10 w-10 rounded-full bg-primary text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white"
             aria-pressed={playing}
             aria-label={playing ? "Pause" : "Lecture"}
             title={playing ? "Pause" : "Lecture"}
           >
-            {playing ? "⏸" : "▶"}
+            {/* Icône Play/Pause */}
+            {playing ? (
+              <PauseIcon className="h-5 w-5" />
+            ) : (
+              <PlayIcon className="h-5 w-5" />
+            )}
           </button>
           <button
             onClick={next}
-            className="h-10 w-10 rounded-full border border-white/10 hover:bg-white/10"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 hover:bg-white/10"
             aria-label="Piste suivante"
             title="Piste suivante"
           >
-            ⏭
+            {/* Icône Suivant */}
+            <ForwardIcon className="h-5 w-5" />
           </button>
         </div>
       </div>
@@ -538,6 +556,16 @@ export default function App() {
                 <div className="mb-3 text-2xl">{s.icon}</div>
                 <h4 className="font-semibold">{s.title}</h4>
                 <p className="mt-2 text-sm opacity-80">{s.desc}</p>
+                {s.title === "Créez votre profil" && (
+                  <a
+                    href="/profil" /* ou "/onboarding" selon ta route */
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium underline decoration-primary/60 underline-offset-4 hover:opacity-100"
+                    aria-label="Créer mon profil maintenant (ouverture de l’onboarding)"
+                  >
+                    Créer mon profil maintenant
+                    <span aria-hidden>→</span>
+                  </a>
+                )}
               </div>
             ))}
           </div>
@@ -708,11 +736,8 @@ l6.19,5.238C42.022,35.257,44,30.038,44,24C44,22.659,43.862,21.35,43.611,20.083z"
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm opacity-80 md:flex-row">
           {/* Dans le div qui contient le logo et le copyright */}
           <div className="flex flex-col items-center gap-2 text-center md:flex-row md:text-left">
-            <TextLogo />
-            <span>
-              © {new Date().getFullYear()} • Pour un web plus humain. Fait à
-              Lille. 🌱
-            </span>
+            © {new Date().getFullYear()} <TextLogo />™{" "}
+            <span>Pour un web plus humain. Fait à Lille. 🌱</span>
           </div>
           <div className="flex items-center gap-6">
             {/* QR Code visible uniquement sur desktop */}
