@@ -550,33 +550,59 @@ export default function App() {
           </div>
         </div>
       </section>
-      {/* Exemples (carte centrale) */}
-      <section
-        id="exemples"
-        className="mx-auto max-w-7xl px-6 py-16 text-center"
-      >
-        <h3 className="text-2xl md:text-3xl font-bold">
-          La radio locale, ça sonne comme ça.
-        </h3>
-        <p className="mx-auto mt-3 max-w-2xl opacity-80">
-          Plongez dans l’ambiance et écoutez les histoires qui font vivre votre
-          quartier.
-        </p>
-        <div className="mx-auto mt-10 grid gap-6 md:grid-cols-2 max-w-3xl text-left">
-          <AudioCard
-            title="La Grande Brocante"
-            subtitle="Quartier Saint-Pierre"
-            src={audioBrocante}
-            cover={coverBrocante}
-          />
-          <AudioCard
-            title="L'Atelier du Coiffeur"
-            subtitle="Une coupe qui vous ressemble"
-            src={audioYesin}
-            cover={coverCoiffeur}
+
+      {/* Section Test Enregistreur Audio */}
+      {/* Section Répondeur Vocal */}
+      <section id="repondeur-vocal" className="mx-auto max-w-7xl px-6 py-16">
+        <div className="text-center">
+          <h3 className="text-2xl md:text-3xl font-bold">
+            La radio locale, ça sonne comme ça. Le répondeur des visiteurs
+          </h3>
+          <p className="mx-auto mt-3 max-w-2xl opacity-80">
+            Laissez votre message vocal sans inscription, et écoutez les
+            contributions de la communauté qui font vivre cette page.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-10 grid max-w-5xl gap-8 md:grid-cols-2">
+          {/* Colonne 1: Enregistrement */}
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg">
+            <h4 className="font-bold text-lg mb-4">
+              Laissez votre trace vocale
+            </h4>
+            <div className="flex items-center gap-3">
+              <button className="btn rounded-full px-4 py-2 font-medium bg-primary hover:opacity-90 text-white transition">
+                🎙️ Enregistrer
+              </button>
+              <div className="text-sm text-fg/70">Jusqu’à 90 secondes</div>
+              <div className="ml-auto tabular-nums text-sm">00:00</div>
+            </div>
+            <p className="mt-4 text-xs opacity-70">
+              Votre message sera ajouté à la radio des visiteurs après un court
+              instant.
+            </p>
+          </div>
+
+          {/* Colonne 2: Lecteur Radio */}
+          <RadioPlayer
+            tracks={[
+              {
+                title: "Message de Léa",
+                subtitle: "Visiteuse",
+                src: audioBrocante,
+                cover: coverBrocante,
+              },
+              {
+                title: "Idée de Marc",
+                subtitle: "Visiteur",
+                src: audioYesin,
+                cover: coverCoiffeur,
+              },
+            ]}
           />
         </div>
       </section>
+
       <section
         id="inscription"
         className="relative overflow-hidden bg-primary/10"
