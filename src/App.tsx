@@ -36,7 +36,7 @@ function ThemeToggle() {
   return (
     <button
       onClick={() => setMode((m) => (m === "dark" ? "light" : "dark"))}
-      className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10"
+      className="rounded-xl border border-black/10 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 dark:border-white/10"
       aria-label="Basculer le thème"
       title="Basculer le thème"
     >
@@ -63,7 +63,7 @@ function AudioCard({
   cover: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg">
+    <div className="rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10">
       <div className="flex items-center gap-4">
         <img
           src={cover}
@@ -85,7 +85,7 @@ function AudioCard({
 /** Carte “lecteur” décorative statique pour la maquette */
 function PlayerCard() {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg">
+    <div className="rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10">
       <div className="flex items-center gap-4">
         <img
           src={coverRestaurant}
@@ -95,7 +95,7 @@ function PlayerCard() {
         <div className="flex-1">
           <div className="font-semibold">Le Volcano Burger</div>
           <div className="text-xs opacity-70">Restaurant indépendant</div>
-          <div className="mt-3 h-2 rounded bg-white/10">
+          <div className="mt-3 h-2 rounded bg-black/10 dark:bg-white/10">
             <div className="h-2 w-1/3 rounded bg-primary" />
           </div>
           <div className="mt-1 flex justify-between text-[10px] opacity-70">
@@ -173,7 +173,7 @@ function CreatorMessageButton() {
     <button
       type="button"
       onClick={toggle}
-      className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium hover:bg-white/10"
+      className="inline-flex items-center gap-2 rounded-2xl border border-black/10 bg-white/5 px-4 py-2 text-sm font-medium hover:bg-white/10 dark:border-white/10"
       aria-pressed={playing}
       aria-label="La radio, en vrai"
       title="La radio, en vrai"
@@ -190,7 +190,7 @@ function CreatorMessageButton() {
       {/* mini barre de progression discrète */}
       <span
         aria-hidden="true"
-        className="ml-2 block h-1 w-14 overflow-hidden rounded bg-white/10"
+        className="ml-2 block h-1 w-14 overflow-hidden rounded bg-black/10 dark:bg-white/10"
       >
         <span
           className="block h-full bg-primary transition-[width]"
@@ -206,7 +206,7 @@ function HeroCreatorMessage() {
     <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-12 md:grid-cols-2">
       {/* Colonne gauche : promesse + CTA + bouton créateur discret */}
       <div>
-        <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
+        <h1 className="text-4xl font-extrabold leading-tight md:text-5xl">
           Votre voix est{" "}
           <span className="text-primary">votre meilleure publicité.</span>
         </h1>
@@ -219,7 +219,7 @@ function HeroCreatorMessage() {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <a
             href="#cta"
-            className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 text-white font-semibold shadow-lg hover:opacity-90"
+            className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 font-semibold text-white shadow-lg hover:opacity-90"
           >
             🎙️ Faites-vous entendre à Lille
           </a>
@@ -230,13 +230,13 @@ function HeroCreatorMessage() {
 
         {/* Badges rapides */}
         <ul className="mt-6 flex flex-wrap gap-2 text-xs opacity-80">
-          <li className="rounded-full border border-white/15 px-3 py-1">
+          <li className="rounded-full border border-black/10 px-3 py-1 dark:border-white/15">
             Gratuit
           </li>
-          <li className="rounded-full border border-white/15 px-3 py-1">
+          <li className="rounded-full border border-black/10 px-3 py-1 dark:border-white/15">
             59s chrono
           </li>
-          <li className="rounded-full border border-white/15 px-3 py-1">
+          <li className="rounded-full border border-black/10 px-3 py-1 dark:border-white/15">
             Local & authentique
           </li>
         </ul>
@@ -249,7 +249,7 @@ function HeroCreatorMessage() {
           <img
             src={mockupImg}
             alt="Aperçu de l'application YesIn"
-            className="w-full rounded-3xl border border-white/10 shadow-2xl"
+            className="w-full rounded-3xl border border-black/10 shadow-2xl dark:border-white/10"
           />
         </div>
       </div>
@@ -339,7 +339,7 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
   const progress = dur ? Math.min(1, Math.max(0, time / dur)) : 0;
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg">
+    <div className="rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10">
       {/* Ligne principale : rendue responsive */}
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 sm:flex-nowrap sm:justify-between">
         {/* Groupe Cover + Infos */}
@@ -355,7 +355,7 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
               {current.subtitle}
             </div>
             <div
-              className="mt-3 h-2 w-full cursor-pointer rounded bg-white/10"
+              className="mt-3 h-2 w-full cursor-pointer rounded bg-black/10 dark:bg-white/10"
               onClick={(e) => {
                 const rect = (
                   e.target as HTMLDivElement
@@ -385,7 +385,7 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
         <div className="flex flex-shrink-0 items-center gap-2">
           <button
             onClick={prev}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 hover:bg-white/10"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 hover:bg-white/10 dark:border-white/10"
             aria-label="Piste précédente"
             title="Piste précédente"
           >
@@ -408,7 +408,7 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
           </button>
           <button
             onClick={next}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 hover:bg-white/10"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 hover:bg-white/10 dark:border-white/10"
             aria-label="Piste suivante"
             title="Piste suivante"
           >
@@ -460,7 +460,7 @@ export default function App() {
   return (
     <main className="min-h-screen bg-bg text-fg">
       {/* Header simple */}
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-bg/70 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-black/10 bg-bg/70 backdrop-blur dark:border-white/10">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <TextLogo />
 
@@ -493,7 +493,7 @@ export default function App() {
           <div className="mt-6">
             <a
               href="#cta"
-              className="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-white font-semibold hover:opacity-90"
+              className="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 font-semibold text-white hover:opacity-90"
             >
               Démarrer gratuitement
             </a>
@@ -528,7 +528,7 @@ export default function App() {
       {/* Étapes en bande contrastée */}
       <section id="etapes" className="bg-primary/10">
         <div className="mx-auto max-w-7xl px-6 py-16">
-          <h3 className="text-center text-2xl md:text-3xl font-bold">
+          <h3 className="text-center text-2xl font-bold md:text-3xl">
             Simple comme 1, 2, 3.
           </h3>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -551,7 +551,7 @@ export default function App() {
             ].map((s) => (
               <div
                 key={s.title}
-                className="rounded-2xl border border-white/10 bg-white/5 p-6"
+                className="rounded-2xl border border-black/10 bg-white/5 p-6 dark:border-white/10"
               >
                 <div className="mb-3 text-2xl">{s.icon}</div>
                 <h4 className="font-semibold">{s.title}</h4>
@@ -576,7 +576,7 @@ export default function App() {
       {/* Section Démo Enregistreur Audio */}
       <section id="demo-enregistreur" className="mx-auto max-w-7xl px-6 py-16">
         <div className="text-center">
-          <h3 className="text-2xl md:text-3xl font-bold">
+          <h3 className="text-2xl font-bold md:text-3xl">
             La radio locale, ça sonne comme ça.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl opacity-80">
@@ -587,7 +587,7 @@ export default function App() {
 
         <div className="mx-auto mt-10 grid max-w-5xl gap-8 md:grid-cols-2">
           {/* Colonne 1: Démo de l'enregistreur */}
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg">
+          <div className="rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10">
             <h4 className="mb-4 text-lg font-bold">À vous d'essayer !</h4>
             <div className="flex items-center gap-3">
               <button className="btn rounded-full bg-primary px-4 py-2 font-medium text-white transition hover:opacity-90">
@@ -631,7 +631,7 @@ export default function App() {
         className="relative overflow-hidden bg-primary/10"
       >
         <div className="mx-auto max-w-2xl px-6 py-20 text-center">
-          <h3 className="text-3xl md:text-4xl font-extrabold">
+          <h3 className="text-3xl font-extrabold md:text-4xl">
             Votre publicité audio{" "}
             <span className="underline">vraiment gratuite</span> vous attend.
           </h3>
@@ -679,9 +679,9 @@ l6.19,5.238C42.022,35.257,44,30.038,44,24C44,22.659,43.862,21.35,43.611,20.083z"
             </button>
 
             <div className="my-4 flex items-center">
-              <hr className="flex-1 border-t border-white/10" />
+              <hr className="flex-1 border-t border-black/10 dark:border-white/10" />
               <span className="px-4 text-xs uppercase opacity-70">Ou</span>
-              <hr className="flex-1 border-t border-white/10" />
+              <hr className="flex-1 border-t border-black/10 dark:border-white/10" />
             </div>
 
             {/* Option 2: Inscription manuelle */}
@@ -692,7 +692,7 @@ l6.19,5.238C42.022,35.257,44,30.038,44,24C44,22.659,43.862,21.35,43.611,20.083z"
               <input
                 type="email" // ou "tel"
                 placeholder="Votre adresse email"
-                className="w-full rounded-lg border-white/20 bg-white/5 p-3 text-center"
+                className="w-full rounded-lg border border-black/10 bg-white/5 p-3 text-center dark:border-white/20"
                 inputMode="email" // "email" ou "tel"
                 required
               />
@@ -717,7 +717,7 @@ l6.19,5.238C42.022,35.257,44,30.038,44,24C44,22.659,43.862,21.35,43.611,20.083z"
       <section id="cta" className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/30 via-primary/10 to-transparent" />
         <div className="mx-auto max-w-5xl px-6 py-20 text-center">
-          <h3 className="text-3xl md:text-4xl font-extrabold">
+          <h3 className="text-3xl font-extrabold md:text-4xl">
             Prêt à faire entendre votre histoire à Lille ?
           </h3>
           <p className="mt-2 opacity-85">
@@ -725,14 +725,14 @@ l6.19,5.238C42.022,35.257,44,30.038,44,24C44,22.659,43.862,21.35,43.611,20.083z"
           </p>
           <a
             href="#"
-            className="mt-8 inline-flex items-center justify-center rounded-2xl bg-primary px-7 py-3 text-white font-semibold shadow-lg hover:opacity-90"
+            className="mt-8 inline-flex items-center justify-center rounded-2xl bg-primary px-7 py-3 font-semibold text-white shadow-lg hover:opacity-90"
           >
             🚀 Je partage mon histoire en 59s
           </a>
         </div>
       </section>
       {/* Footer */}
-      <footer className="border-t border-white/10">
+      <footer className="border-t border-black/10 dark:border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm opacity-80 md:flex-row">
           {/* Dans le div qui contient le logo et le copyright */}
           <div className="flex flex-col items-center gap-2 text-center md:flex-row md:text-left">
