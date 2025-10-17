@@ -270,7 +270,7 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
   const [time, setTime] = useState(0);
   const [dur, setDur] = useState(0);
 
-  // Crée une balise audio contrôlée par le composant
+  // La logique (hooks et fonctions) reste la même
   useEffect(() => {
     const audio = new Audio(tracks[index].src);
     audioRef.current = audio;
@@ -287,7 +287,6 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
     audio.addEventListener("timeupdate", onTime);
     audio.addEventListener("loadedmetadata", onLoaded);
 
-    // Autoplay quand on change de piste si on était en lecture
     const shouldAutoplay = playing;
     if (shouldAutoplay) audio.play().catch(() => {});
 
@@ -301,7 +300,7 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
       audioRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index]); // on recrée l’audio quand l’index change
+  }, [index]);
 
   const playPause = () => {
     const a = audioRef.current;
@@ -331,45 +330,48 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg">
-      {/* Ligne principale : cover + infos + commandes */}
-      <div className="flex items-center gap-4">
-        <img
-          src={current.cover}
-          alt={current.title}
-          className="h-20 w-20 rounded-xl object-cover"
-        />
-
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-semibold">{current.title}</div>
-          <div className="truncate text-xs opacity-70">{current.subtitle}</div>
-
-          {/* Barre de progression cliquable */}
-          <div
-            className="mt-3 h-2 w-full cursor-pointer rounded bg-white/10"
-            onClick={(e) => {
-              const rect = (e.target as HTMLDivElement).getBoundingClientRect();
-              const ratio = (e.clientX - rect.left) / rect.width;
-              seek(ratio);
-            }}
-            role="progressbar"
-            aria-valuenow={Math.round(progress * 100)}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
+      {/* Ligne principale : rendue responsive */}
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 sm:flex-nowrap sm:justify-between">
+        {/* Groupe Cover + Infos */}
+        <div className="flex min-w-[200px] flex-1 items-center gap-4">
+          <img
+            src={current.cover}
+            alt={current.title}
+            className="h-20 w-20 flex-shrink-0 rounded-xl object-cover"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-semibold">{current.title}</div>
+            <div className="truncate text-xs opacity-70">
+              {current.subtitle}
+            </div>
             <div
-              className="h-2 rounded bg-primary transition-[width]"
-              style={{ width: `${progress * 100}%` }}
-            />
-          </div>
-
-          <div className="mt-1 flex justify-between text-[10px] opacity-70">
-            <span>{formatTime(time)}</span>
-            <span>{formatTime(dur || 0)}</span>
+              className="mt-3 h-2 w-full cursor-pointer rounded bg-white/10"
+              onClick={(e) => {
+                const rect = (
+                  e.target as HTMLDivElement
+                ).getBoundingClientRect();
+                const ratio = (e.clientX - rect.left) / rect.width;
+                seek(ratio);
+              }}
+              role="progressbar"
+              aria-valuenow={Math.round(progress * 100)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div
+                className="h-2 rounded bg-primary transition-[width]"
+                style={{ width: `${progress * 100}%` }}
+              />
+            </div>
+            <div className="mt-1 flex justify-between text-[10px] opacity-70">
+              <span>{formatTime(time)}</span>
+              <span>{formatTime(dur || 0)}</span>
+            </div>
           </div>
         </div>
 
         {/* Commandes */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-shrink-0 items-center gap-2">
           <button
             onClick={prev}
             className="h-10 w-10 rounded-full border border-white/10 hover:bg-white/10"
@@ -443,15 +445,6 @@ export default function App() {
       <header className="sticky top-0 z-30 border-b border-white/10 bg-bg/70 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <TextLogo />
-
-          {/* BOUTON ENREGISTRER CENTRÉ */}
-          <a
-            href="#cta"
-            className="absolute left-1/2 -translate-x-1/2 inline-flex items-center justify-center rounded-2xl bg-[#7266EE] px-5 py-2.5 text-white font-semibold shadow-lg hover:opacity-90"
-          >
-            🎙️ Enregistrer ma publicité
-            <span className="sr-only">ouvrir la section d’enregistrement</span>
-          </a>
 
           {/* Toggle thème à droite */}
           <ThemeToggle />
@@ -530,7 +523,7 @@ export default function App() {
               {
                 icon: "🎙️",
                 title: "Enregistrez votre pitch",
-                desc: "Depuis votre téléphone, présentez votre projet en 90 secondes. L'authenticité prime.",
+                desc: "Depuis votre téléphone, présentez votre projet en 59 secondes. L'authenticité prime.",
               },
               {
                 icon: "📡",
@@ -552,49 +545,51 @@ export default function App() {
       </section>
 
       {/* Section Test Enregistreur Audio */}
-      {/* Section Répondeur Vocal */}
-      <section id="repondeur-vocal" className="mx-auto max-w-7xl px-6 py-16">
+      {/* Section Démo Enregistreur Audio */}
+      <section id="demo-enregistreur" className="mx-auto max-w-7xl px-6 py-16">
         <div className="text-center">
           <h3 className="text-2xl md:text-3xl font-bold">
-            La radio locale, ça sonne comme ça. Le répondeur des visiteurs
+            La radio locale, ça sonne comme ça.
           </h3>
           <p className="mx-auto mt-3 max-w-2xl opacity-80">
-            Laissez votre message vocal sans inscription, et écoutez les
-            contributions de la communauté qui font vivre cette page.
+            Découvrez des exemples de pitchs audio créés par des acteurs locaux
+            comme vous, et testez notre enregistreur en direct.
           </p>
         </div>
 
         <div className="mx-auto mt-10 grid max-w-5xl gap-8 md:grid-cols-2">
-          {/* Colonne 1: Enregistrement */}
+          {/* Colonne 1: Démo de l'enregistreur */}
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg">
-            <h4 className="font-bold text-lg mb-4">
-              Laissez votre trace vocale
-            </h4>
+            <h4 className="mb-4 text-lg font-bold">À vous d'essayer !</h4>
             <div className="flex items-center gap-3">
-              <button className="btn rounded-full px-4 py-2 font-medium bg-primary hover:opacity-90 text-white transition">
+              <button className="btn rounded-full bg-primary px-4 py-2 font-medium text-white transition hover:opacity-90">
                 🎙️ Enregistrer
               </button>
-              <div className="text-sm text-fg/70">Jusqu’à 90 secondes</div>
+              <div className="text-sm text-fg/70">Jusqu’à 59 secondes</div>
               <div className="ml-auto tabular-nums text-sm">00:00</div>
             </div>
             <p className="mt-4 text-xs opacity-70">
-              Votre message sera ajouté à la radio des visiteurs après un court
-              instant.
+              Ceci est une démo. Votre enregistrement sera sauvegardé pendant 7
+              jours. Prêt à créer le vôtre ?{" "}
+              <a href="#cta" className="underline hover:text-primary">
+                C'est par ici
+              </a>
+              .
             </p>
           </div>
 
-          {/* Colonne 2: Lecteur Radio */}
+          {/* Colonne 2: Lecteur Radio avec des exemples pertinents */}
           <RadioPlayer
             tracks={[
               {
                 title: "Message de Léa",
-                subtitle: "Visiteuse",
+                subtitle: "Artisane locale",
                 src: audioBrocante,
                 cover: coverBrocante,
               },
               {
                 title: "Idée de Marc",
-                subtitle: "Visiteur",
+                subtitle: "Restaurateur",
                 src: audioYesin,
                 cover: coverCoiffeur,
               },
@@ -637,6 +632,10 @@ export default function App() {
             >
               📢 Créer mon profil
             </button>
+            <p className="mt-2 text-xs opacity-70">
+              Vous recevrez un lien unique pour finaliser votre profil et
+              enregistrer votre pitch de 59 secondes, sans engagement.
+            </p>
           </form>
           {/* ============================== */}
         </div>
@@ -655,31 +654,34 @@ export default function App() {
             href="#"
             className="mt-8 inline-flex items-center justify-center rounded-2xl bg-primary px-7 py-3 text-white font-semibold shadow-lg hover:opacity-90"
           >
-            🚀 Je partage mon histoire en 90s
+            🚀 Je partage mon histoire en 59s
           </a>
         </div>
       </section>
       {/* Footer */}
       <footer className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm opacity-80 md:flex-row">
-          <div className="flex items-center gap-2">
+          {/* Dans le div qui contient le logo et le copyright */}
+          <div className="flex flex-col items-center gap-2 text-center md:flex-row md:text-left">
             <TextLogo />
             <span>
-              — © {new Date().getFullYear()} • Pour un web plus humain. Fait à
+              © {new Date().getFullYear()} • Pour un web plus humain. Fait à
               Lille. 🌱
             </span>
           </div>
           <div className="flex items-center gap-6">
+            {/* QR Code visible uniquement sur desktop */}
             <img
               src={qrWhatsapp}
               alt="QR WhatsApp"
-              className="h-10 w-10 rounded bg-white p-1"
+              className="hidden h-10 w-10 rounded bg-white p-1 md:block" // hidden on mobile, block on desktop
             />
-            <a href="#" className="hover:opacity-100 opacity-80">
-              Mentions
-            </a>
-            <a href="#" className="hover:opacity-100 opacity-80">
-              Contact
+            {/* Lien visible uniquement sur mobile */}
+            <a
+              href="https://wa.me/VOTRE_NUMERO" // Lien direct WhatsApp
+              className="rounded-lg bg-green-500 px-3 py-1 text-white md:hidden"
+            >
+              Contact WhatsApp
             </a>
           </div>
         </div>
