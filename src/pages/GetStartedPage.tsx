@@ -373,7 +373,7 @@ export default function App() {
       >
         <div className="md:pr-8">
           <h3 className="text-3xl font-bold">
-            La Solution : <span className="text-primary">yesin.media</span>
+            La Solution : <span className="text-primary">YesIn.media</span>
           </h3>
           <p className="mt-4 opacity-85">
             Nous redonnons le pouvoir à votre voix. yesin.media connecte acteurs
