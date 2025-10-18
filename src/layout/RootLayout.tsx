@@ -54,11 +54,14 @@ export default function RootLayout() {
       </main>
 
       <footer className="border-t border-black/10 dark:border-white/10">
-        {/* ... Le reste du footer reste inchangé ... */}
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm opacity-80 md:flex-row">
           <div className="flex flex-col items-center gap-2 text-center md:flex-row md:text-left">
-            © {new Date().getFullYear()} <TextLogo />™{" "}
-            <span>Pour un web plus humain. Fait à Lille. 🌱</span>
+            © {new Date().getFullYear()}
+            {/* On groupe le logo et le ™ dans un conteneur pour les traiter comme un seul bloc */}
+            <span className="inline-flex items-baseline">
+              <TextLogo />™
+            </span>
+            -<span>Pour un web plus humain. Fait à Lille. 🌱</span>
           </div>
 
           <div className="flex items-center gap-6">
