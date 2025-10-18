@@ -43,7 +43,7 @@ export default function RootLayout() {
             />
             {/* Lien visible uniquement sur mobile */}
             <a
-              href="https://wa.me/VOTRE_NUMERO" // ← remplace par ton numéro ex: 33612345678
+              href="https://wa.me/3366668573"
               className="rounded-lg bg-green-500 px-3 py-1 text-white md:hidden"
             >
               Contact WhatsApp
