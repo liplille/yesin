@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
-import Toast from "../components/Toast"; // Importer le Toast
+import Toast from "../components/Toast";
 
 export default function CreatePitchPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [countdown, setCountdown] = useState(59);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState(""); // Pour l'aria-live
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const navigate = useNavigate();
 
   // Vérifie la session utilisateur
   useEffect(() => {
@@ -37,6 +37,7 @@ export default function CreatePitchPage() {
   }, [isRecording]);
 
   const handleStartRecording = async () => {
+    setError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
@@ -51,9 +52,7 @@ export default function CreatePitchPage() {
       setStatusMessage("Enregistrement démarré.");
       setIsRecording(true);
     } catch (err) {
-      setError(
-        "L'accès au micro est nécessaire. Veuillez l'autoriser dans les paramètres de votre navigateur."
-      );
+      setError("L'accès au micro est nécessaire. Veuillez l'autoriser.");
     }
   };
 
@@ -61,20 +60,26 @@ export default function CreatePitchPage() {
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
     setCountdown(59);
-    setStatusMessage("Enregistrement terminé.");
+    setStatusMessage(
+      "Enregistrement terminé. Vous pouvez écouter avant d'envoyer."
+    );
   };
 
   const handleSendPitch = async () => {
     if (!audioBlob) return;
     const { data } = await supabase.auth.getUser();
     const user = data.user;
-    if (!user) return alert("Veuillez vous reconnecter.");
+    if (!user) {
+      setError("Veuillez vous reconnecter pour envoyer votre pitch.");
+      return;
+    }
 
     const fileName = `pitch-${user.id}-${Date.now()}.m4a`;
-    const { error } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("pitches")
       .upload(fileName, audioBlob);
-    if (error) alert(error.message);
+
+    if (uploadError) setError(uploadError.message);
     else navigate("/thank-you");
   };
 

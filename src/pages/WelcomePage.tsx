@@ -21,18 +21,19 @@ export default function WelcomePage() {
     });
     setLoading(false);
 
-    if (error) alert(error.message);
+    if (error) setError(error.message);
     else navigate("/thank-you?mode=check-email");
   };
 
   const handleGoogleLogin = async () => {
+    setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/create-pitch`,
       },
     });
-    if (error) alert(error.message);
+    if (error) setError(error.message);
   };
 
   return (
