@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   PlayIcon,
   PauseIcon,
@@ -113,12 +114,12 @@ function HeroCreatorMessage() {
         </p>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <a
-            href="#cta"
+          <Link
+            to="/welcome"
             className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 font-semibold text-white shadow-lg hover:opacity-90"
           >
             🎙️ Faites-vous entendre à Lille
-          </a>
+          </Link>
 
           {/* Bouton discret Play/Pause du message du créateur */}
           <CreatorMessageButton />
@@ -380,12 +381,12 @@ export default function App() {
             engageante.
           </p>
           <div className="mt-6">
-            <a
-              href="#cta"
+            <Link
+              to="/welcome"
               className="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 font-semibold text-white hover:opacity-90"
             >
               Démarrer gratuitement
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -488,9 +489,9 @@ export default function App() {
             <p className="mt-4 text-xs opacity-70">
               Ceci est une démo. Votre enregistrement sera sauvegardé pendant 7
               jours. Prêt à créer le vôtre ?{" "}
-              <a href="#cta" className="underline hover:text-primary">
+              <Link to="/welcome" className="underline hover:text-primary">
                 C'est par ici
-              </a>
+              </Link>
               .
             </p>
           </div>
@@ -612,12 +613,12 @@ l6.19,5.238C42.022,35.257,44,30.038,44,24C44,22.659,43.862,21.35,43.611,20.083z"
           <p className="mt-2 opacity-85">
             Votre voix a de la valeur. Il est temps de la faire entendre.
           </p>
-          <a
-            href="#"
+          <Link
+            to="/welcome"
             className="mt-8 inline-flex items-center justify-center rounded-2xl bg-primary px-7 py-3 font-semibold text-white shadow-lg hover:opacity-90"
           >
             🚀 Je partage mon histoire en 59s
-          </a>
+          </Link>
         </div>
       </section>
       {/* Footer */}
