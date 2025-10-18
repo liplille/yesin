@@ -54,6 +54,10 @@ export function RouteGate({
       return <Navigate to="/create-pitch" replace />;
 
     case "email": {
+      // RÈGLE AJOUTÉE : Un utilisateur connecté n'a rien à faire ici.
+      if (session) {
+        return <Navigate to="/create-pitch" replace />;
+      }
       const params = new URLSearchParams(location.search);
       const value = params.get(emailParamName);
       if (value === emailParamValue) return children;

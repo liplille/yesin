@@ -18,14 +18,15 @@ export default function ThankYouPage({ variant }: ThankYouPageProps) {
             adresse.
           </p>
         </>
-      ) : (
+      ) : variant === "submitted" ? (
         <>
           <h1 className="text-3xl font-bold mb-2">Merci 🙏</h1>
           <p className="mb-6 opacity-80">
             Votre pitch a bien été envoyé. Nous l’écouterons bientôt.
           </p>
         </>
-      )}
+      ) : null}{" "}
+      {/* Ajout du cas final pour rendre la condition explicite et complète */}
       <Link to="/" className="underline">
         Revenir à l’accueil
       </Link>

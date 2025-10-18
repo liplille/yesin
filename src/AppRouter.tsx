@@ -56,22 +56,20 @@ const router = createBrowserRouter([
       {
         path: "/thank-you",
         element: (
-          <RouteGate
-            mode="email"
-            emailParamName="mode"
-            emailParamValue="check-email"
-          >
-            <ThankYouPage />
+          <RouteGate mode="email">
+            {/* CETTE LIGNE EST CRUCIALE */}
+            <ThankYouPage variant="check-email" />
           </RouteGate>
         ),
       },
 
-      // Cas spécial: après envoi audio (connecté + flag éphémère)
+      // Cas spécial: après envoi audio
       {
         path: "/thank-you/submitted",
         element: (
           <RouteGate mode="audio">
-            <ThankYouPage />
+            {/* ET CELLE-CI AUSSI */}
+            <ThankYouPage variant="submitted" />
           </RouteGate>
         ),
       },
