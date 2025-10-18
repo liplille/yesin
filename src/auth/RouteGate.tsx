@@ -1,6 +1,6 @@
 // src/auth/RouteGate.tsx
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "./AuthProvider";
+import { useAuth } from "./../auth/AuthProvider";
 import { useEphemeralFlag } from "../hooks/useEphemeralFlag";
 
 type Mode = "any" | "auth" | "anon" | "email" | "audio";
@@ -8,12 +8,9 @@ type Mode = "any" | "auth" | "anon" | "email" | "audio";
 type Props = {
   mode: Mode;
   children: JSX.Element;
-  // Où rediriger si l'accès est refusé
   redirectTo?: string;
-  // Pour email: nom du param et valeur attendue
   emailParamName?: string; // "mode"
   emailParamValue?: string; // "check-email"
-  // Pour auth: chemin “from” mémorisé
   rememberFrom?: boolean;
 };
 
@@ -31,7 +28,14 @@ export function RouteGate({
 }: Props) {
   const { session, loading } = useAuth();
   const location = useLocation();
-  const audioSubmitted = useEphemeralFlag("audioSubmitted");
+
+  // support du flag "éphémère" + support du state de navigation
+  const ephemeralAudioFlag = useEphemeralFlag("audioSubmitted");
+  const routeState =
+    (location.state as { audioSubmitted?: boolean } | null) ?? null;
+  const audioSubmitted = Boolean(
+    routeState?.audioSubmitted || ephemeralAudioFlag
+  );
 
   if (loading) return <LoadingSplash />;
 
@@ -54,22 +58,23 @@ export function RouteGate({
       return <Navigate to="/create-pitch" replace />;
 
     case "email": {
-      // RÈGLE AJOUTÉE : Un utilisateur connecté n'a rien à faire ici.
-      if (session) {
-        return <Navigate to="/create-pitch" replace />;
-      }
+      // Un utilisateur connecté n’a rien à faire ici → retour à create-pitch
+      if (session) return <Navigate to="/create-pitch" replace />;
       const params = new URLSearchParams(location.search);
       const value = params.get(emailParamName);
       if (value === emailParamValue) return children;
-      return <Navigate to="/get-started" replace />;
+      // si mauvais param, retour à l’accueil
+      return <Navigate to="/" replace />;
     }
 
     case "audio":
+      // Autorisé si connecté + flag présent (state ou ephemeral)
       if (session && audioSubmitted) return children;
-      // Si pas connecté -> vers welcome, sinon vers oops
-      return <Navigate to={session ? "/oops" : "/welcome"} replace />;
+      // UX: si connecté mais pas de flag → on le renvoie finir son pitch
+      // si non connecté → welcome
+      return <Navigate to={session ? "/create-pitch" : "/welcome"} replace />;
 
     default:
-      return <Navigate to="/oops" replace />;
+      return <Navigate to={redirectTo} replace />;
   }
 }

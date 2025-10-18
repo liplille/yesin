@@ -1,34 +1,19 @@
 // src/hooks/useEphemeralFlag.ts
-import { useLocation } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export function useEphemeralFlag(key: string) {
-  const location = useLocation() as any;
-  const consumedRef = useRef(false);
-
-  const stateValue = location.state?.[key];
+  // On lit la valeur initiale depuis le sessionStorage
   const storageValue = sessionStorage.getItem(key) === "true";
-  const initial = Boolean(stateValue ?? storageValue);
-
-  const [value, setValue] = useState(initial);
+  const [value, setValue] = useState(storageValue);
 
   useEffect(() => {
-    if (consumedRef.current) return;
-    if (stateValue === true) sessionStorage.setItem(key, "true");
-    // Consomme à la première lecture (one-shot)
-    if (initial) {
-      consumedRef.current = true;
-      setValue(true);
+    // Si la valeur était présente, on la "consomme" en la supprimant
+    if (storageValue) {
       sessionStorage.removeItem(key);
-      // Optionnel: nettoyer l'état d'histo (évite re-navigation avec state)
-      window.history.replaceState(
-        {},
-        document.title,
-        window.location.pathname + window.location.search
-      );
+      // On s'assure que le state est bien à jour
+      setValue(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [storageValue, key]);
 
   return value;
 }

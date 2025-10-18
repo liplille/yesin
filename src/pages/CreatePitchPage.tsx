@@ -450,13 +450,13 @@ export default function CreatePitchPage() {
     if (uploadError) {
       setError(uploadError.message);
     } else {
+      // On stocke le drapeau dans la session du navigateur
+      sessionStorage.setItem("audioSubmitted", "true");
       navigate("/thank-you/submitted", {
         replace: true,
-        state: { audioSubmitted: true },
       });
     }
   };
-
   const handleReset = () => {
     if (
       mediaRecorderRef.current &&

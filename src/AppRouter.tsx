@@ -8,21 +8,23 @@ import GetStartedPage from "./pages/GetStartedPage";
 import OopsPage from "./pages/OopsPage";
 import WelcomePage from "./pages/WelcomePage";
 import CreatePitchPage from "./pages/CreatePitchPage";
-import ThankYouPage from "./pages/ThankYouPage"; // Utiliser la page unifiée
+import ThankYouPage from "./pages/ThankYouPage"; // page unifiée (variant)
 
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
-      // Accessible par tous
+      // Accueil public
       {
-        path: "/get-started",
+        path: "/",
         element: (
           <RouteGate mode="any">
             <GetStartedPage />
           </RouteGate>
         ),
       },
+
+      // Page d’erreur dédiée (optionnelle : on garde /oops si tu veux un lien direct)
       {
         path: "/oops",
         element: (
@@ -32,7 +34,7 @@ const router = createBrowserRouter([
         ),
       },
 
-      // Uniquement hors connexion
+      // Auth — anonymes uniquement
       {
         path: "/welcome",
         element: (
@@ -42,7 +44,7 @@ const router = createBrowserRouter([
         ),
       },
 
-      // Uniquement connecté
+      // Pitch — uniquement connecté
       {
         path: "/create-pitch",
         element: (
@@ -52,29 +54,27 @@ const router = createBrowserRouter([
         ),
       },
 
-      // Cas spécial: lien e-mail
+      // Merci "check email" — accès via ?mode=check-email
       {
         path: "/thank-you",
         element: (
           <RouteGate mode="email">
-            {/* CETTE LIGNE EST CRUCIALE */}
             <ThankYouPage variant="check-email" />
           </RouteGate>
         ),
       },
 
-      // Cas spécial: après envoi audio
+      // Merci après envoi audio — nécessite le flag (cf. RouteGate)
       {
         path: "/thank-you/submitted",
         element: (
           <RouteGate mode="audio">
-            {/* ET CELLE-CI AUSSI */}
             <ThankYouPage variant="submitted" />
           </RouteGate>
         ),
       },
 
-      // fallback: redirige sobrement vers get-started
+      // Fallback : retourne à l’accueil
       {
         path: "*",
         element: (
