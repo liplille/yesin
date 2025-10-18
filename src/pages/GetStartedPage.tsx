@@ -9,6 +9,7 @@ import {
 import "../index.css";
 import AuthForm from "../components/AuthForm";
 import { useAuth } from "../auth/AuthProvider";
+import TextLogo from "../components/TextLogo";
 
 /* === ASSETS === */
 import mockupImg from "../assets/images/yesin-app-mockup.png";
@@ -373,10 +374,13 @@ export default function App() {
       >
         <div className="md:pr-8">
           <h3 className="text-3xl font-bold">
-            La Solution : <span className="text-primary">YesIn.media</span>
+            La Solution :{" "}
+            <span className="text-primary">
+              <TextLogo />
+            </span>
           </h3>
           <p className="mt-4 opacity-85">
-            Nous redonnons le pouvoir à votre voix. yesin.media connecte acteurs
+            Nous redonnons le pouvoir à votre voix. YesIn.media connecte acteurs
             locaux et habitants curieux. Un passant se promène dans votre
             quartier, ouvre notre radio et entend
             <span className="font-semibold"> votre voix</span> raconter votre
