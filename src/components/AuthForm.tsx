@@ -102,6 +102,11 @@ l6.19,5.238C42.022,35.257,44,30.038,44,24C44,22.659,43.862,21.35,43.611,20.083z"
         </button>
       </form>
 
+      <p className="mx-auto mt-4 max-w-sm text-xs opacity-70">
+        Vous recevrez un lien unique pour finaliser votre profil et enregistrer
+        votre pitch de maximum 59 secondes, sans engagement.
+      </p>
+
       <Toast message={error} onClose={() => setError(null)} />
     </div>
   );
