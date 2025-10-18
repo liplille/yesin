@@ -80,7 +80,11 @@ export default function CreatePitchPage() {
       .upload(fileName, audioBlob);
 
     if (uploadError) setError(uploadError.message);
-    else navigate("/thank-you");
+    else
+      navigate("/thank-you/submitted", {
+        replace: true,
+        state: { audioSubmitted: true },
+      });
   };
 
   return (

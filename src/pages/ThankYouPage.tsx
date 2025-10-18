@@ -1,12 +1,14 @@
-import { useLocation, Link } from "react-router-dom";
+// src/pages/ThankYouPage.tsx
+import { Link } from "react-router-dom";
 
-export default function ThankYouPage() {
-  const location = useLocation();
-  const mode = new URLSearchParams(location.search).get("mode");
+type ThankYouPageProps = {
+  variant: "check-email" | "submitted";
+};
 
+export default function ThankYouPage({ variant }: ThankYouPageProps) {
   return (
     <div className="py-20 text-center">
-      {mode === "check-email" ? (
+      {variant === "check-email" ? (
         <>
           <h1 className="text-3xl font-bold mb-2">
             Vérifiez votre boîte mail 📧
