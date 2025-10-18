@@ -8,7 +8,7 @@ import GetStartedPage from "./pages/GetStartedPage";
 import OopsPage from "./pages/OopsPage";
 import WelcomePage from "./pages/WelcomePage";
 import CreatePitchPage from "./pages/CreatePitchPage";
-import ThankYouPage from "./pages/ThankYouPage";
+import ThankYouPage from "./pages/ThankYouPage"; // Utiliser la page unifiée
 
 const router = createBrowserRouter([
   {

@@ -51,13 +51,13 @@ export function RouteGate({
 
     case "anon":
       if (!session) return children;
-      return <Navigate to="/get-started" replace />;
+      return <Navigate to="/create-pitch" replace />;
 
     case "email": {
       const params = new URLSearchParams(location.search);
       const value = params.get(emailParamName);
       if (value === emailParamValue) return children;
-      return <Navigate to={redirectTo} replace />;
+      return <Navigate to="/get-started" replace />;
     }
 
     case "audio":
