@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
+import Toast from "../components/Toast";
 
 export default function WelcomePage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null); // État pour l'erreur
   const navigate = useNavigate();
 
   const handleMagicLinkLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -91,6 +94,7 @@ l6.19,5.238C42.022,35.257,44,30.038,44,24C44,22.659,43.862,21.35,43.611,20.083z"
           {loading ? "Envoi en cours..." : "Recevoir mon lien magique"}
         </button>
       </form>
+      <Toast message={error} onClose={() => setError(null)} />
     </div>
   );
 }

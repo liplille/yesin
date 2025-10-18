@@ -8,26 +8,21 @@ export function useSupabaseAuthListener() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // La session initiale est récupérée, on arrête le chargement
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setIsLoading(false);
     });
 
-    // Le listener est mis en place pour les changements futurs
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      // Si la session change, le chargement est terminé
-      if (isLoading) setIsLoading(false);
     });
 
-    // Nettoyage de l'abonnement
     return () => {
       subscription.unsubscribe();
     };
-  }, [isLoading]);
+  }, []); // <-- Tableau de dépendances vidé
 
   return { session, isLoading };
 }

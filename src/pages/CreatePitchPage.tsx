@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import Toast from "../components/Toast"; // Importer le Toast
 
 export default function CreatePitchPage() {
   const [isRecording, setIsRecording] = useState(false);
@@ -8,6 +9,8 @@ export default function CreatePitchPage() {
   const [countdown, setCountdown] = useState(59);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState(""); // Pour l'aria-live
 
   // Vérifie la session utilisateur
   useEffect(() => {
@@ -34,23 +37,31 @@ export default function CreatePitchPage() {
   }, [isRecording]);
 
   const handleStartRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const recorder = new MediaRecorder(stream);
-    const chunks: Blob[] = [];
-    recorder.ondataavailable = (e) => chunks.push(e.data);
-    recorder.onstop = () => {
-      setAudioBlob(new Blob(chunks, { type: "audio/m4a" }));
-      stream.getTracks().forEach((t) => t.stop());
-    };
-    mediaRecorderRef.current = recorder;
-    recorder.start();
-    setIsRecording(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = () => {
+        setAudioBlob(new Blob(chunks, { type: "audio/m4a" }));
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setStatusMessage("Enregistrement démarré.");
+      setIsRecording(true);
+    } catch (err) {
+      setError(
+        "L'accès au micro est nécessaire. Veuillez l'autoriser dans les paramètres de votre navigateur."
+      );
+    }
   };
 
   const handleStopRecording = () => {
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
     setCountdown(59);
+    setStatusMessage("Enregistrement terminé.");
   };
 
   const handleSendPitch = async () => {
@@ -69,6 +80,10 @@ export default function CreatePitchPage() {
 
   return (
     <div className="mx-auto max-w-2xl py-20 text-center">
+      {/* Annonces pour les lecteurs d'écran */}
+      <div className="sr-only" aria-live="polite" role="status">
+        {statusMessage}
+      </div>
       <h1 className="text-3xl font-bold mb-2">Enregistrez votre pitch 🎙️</h1>
       <p className="mb-6 opacity-80">Vous avez 59 secondes pour convaincre.</p>
 
@@ -115,6 +130,7 @@ export default function CreatePitchPage() {
           </div>
         )}
       </div>
+      <Toast message={error} onClose={() => setError(null)} />
     </div>
   );
 }

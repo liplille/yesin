@@ -293,7 +293,11 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
             onClick={playPause}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white"
             aria-pressed={playing}
-            aria-label={playing ? "Pause" : "Lecture"}
+            aria-label={
+              playing
+                ? `Mettre en pause ${current.title}`
+                : `Lire ${current.title}`
+            }
             title={playing ? "Pause" : "Lecture"}
           >
             {/* Icône Play/Pause */}
