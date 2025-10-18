@@ -454,9 +454,12 @@ export default function CreatePitchPage() {
       sessionStorage.setItem("audioSubmitted", "true");
       navigate("/thank-you/submitted", {
         replace: true,
+        // Ajout de l'état pour une redirection fiable
+        state: { audioSubmitted: true },
       });
     }
   };
+
   const handleReset = () => {
     if (
       mediaRecorderRef.current &&
