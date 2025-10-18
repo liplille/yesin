@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/24/solid";
 import "../index.css";
 import AuthForm from "../components/AuthForm";
+import { useAuth } from "../auth/AuthProvider";
 
 /* === ASSETS === */
 import mockupImg from "../assets/images/yesin-app-mockup.png";
@@ -359,6 +360,7 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
 }
 
 export default function App() {
+  const { session } = useAuth();
   return (
     <main className="min-h-screen bg-bg text-fg">
       {/* Header simple */}
@@ -467,7 +469,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Section Test Enregistreur Audio */}
       {/* Section Démo Enregistreur Audio */}
       <section id="demo-enregistreur" className="mx-auto max-w-7xl px-6 py-16">
         <div className="text-center">
@@ -521,25 +522,27 @@ export default function App() {
         </div>
       </section>
 
-      <section
-        id="inscription"
-        className="relative overflow-hidden bg-primary/10"
-      >
-        <div className="mx-auto max-w-2xl px-6 py-20 text-center">
-          <h3 className="text-3xl font-extrabold md:text-4xl">
-            Votre publicité audio{" "}
-            <span className="underline">vraiment gratuite</span> vous attend.
-          </h3>
-          <p className="mt-2 opacity-85">
-            Renseignez votre contact et touchez des milliers de clients dans
-            votre quartier.
-          </p>
-
-          <div className="mt-8 flex justify-center">
-            <AuthForm buttonLabel="📢 Créer mon profil" />
+      {/* 3. Afficher cette section uniquement si l'utilisateur N'EST PAS connecté */}
+      {!session && (
+        <section
+          id="inscription"
+          className="relative overflow-hidden bg-primary/10"
+        >
+          <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+            <h3 className="text-3xl font-extrabold md:text-4xl">
+              Votre publicité audio{" "}
+              <span className="underline">vraiment gratuite</span> vous attend.
+            </h3>
+            <p className="mt-2 opacity-85">
+              Renseignez votre contact et touchez des milliers de clients dans
+              votre quartier.
+            </p>
+            <div className="mt-8 flex justify-center">
+              <AuthForm buttonLabel="📢 Créer mon profil" />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Gros CTA final */}
       <section id="cta" className="relative overflow-hidden">
