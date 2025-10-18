@@ -14,8 +14,8 @@ export default function ThankYouPage({ variant }: ThankYouPageProps) {
             Vérifiez votre boîte mail 📧
           </h1>
           <p className="mb-6 opacity-80">
-            Un lien magique vient de vous être envoyé pour confirmer votre
-            adresse.
+            Nous vous avons envoyé un lien d'accès direct pour enregistrer votre
+            annonce gratuite.
           </p>
         </>
       ) : variant === "submitted" ? (
