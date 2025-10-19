@@ -4,9 +4,12 @@ import { useSupabaseAuthListener } from "../hooks/useSupabaseAuthListener";
 import ThemeToggle from "../components/ThemeToggle";
 import TextLogo from "../components/TextLogo";
 import { supabase } from "../lib/supabaseClient";
-import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
+import {
+  ArrowRightOnRectangleIcon,
+  MapPinIcon,
+} from "@heroicons/react/24/solid";
 import qrWhatsapp from "../assets/images/whatsapp-qr-code.png";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 // ⬇️ import du composant géoloc (version avec onResolved)
 import GeoAddress from "../components/GeoAddress";
@@ -17,21 +20,50 @@ export type RootOutletContext = {
   geoCity: string | null;
 };
 
+type GeoAddressHandle = {
+  doLocate: () => void;
+  clearLocate: () => void;
+};
+
 export default function RootLayout() {
   const { session, isLoading } = useSupabaseAuthListener();
   const navigate = useNavigate();
 
   // ⬇️ Ville détectée (null si inconnue / refusée)
   const [geoCity, setGeoCity] = useState<string | null>(null);
+  const [geoStatus, setGeoStatus] = useState<string>("idle");
+  const geoRef = useRef<GeoAddressHandle>(null);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
   };
 
+  const handleGeoToggle = () => {
+    if (geoRef.current) {
+      if (geoStatus === "success") {
+        geoRef.current.clearLocate();
+      } else {
+        geoRef.current.doLocate();
+      }
+    }
+  };
+
   if (isLoading) {
     return <div className="p-6">Chargement de la session…</div>;
   }
+
+  const getGeoIconColor = () => {
+    switch (geoStatus) {
+      case "success":
+        return "text-green-500";
+      case "denied":
+      case "error":
+        return "text-red-500";
+      default:
+        return "text-gray-400";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-bg text-fg">
@@ -42,6 +74,13 @@ export default function RootLayout() {
           </NavLink>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              onClick={handleGeoToggle}
+              title="Activer/Désactiver la géolocalisation"
+              className="rounded-full p-1.5 hover:bg-black/10 dark:hover:bg-white/10"
+            >
+              <MapPinIcon className={`h-6 w-6 ${getGeoIconColor()}`} />
+            </button>
             {session && (
               <button
                 onClick={handleLogout}
@@ -76,8 +115,10 @@ export default function RootLayout() {
 
             {/* ⬇️ On met à jour geoCity dès que la géoloc résout */}
             <GeoAddress
+              ref={geoRef}
               autoRequest // ⬅️ NEW: demande au chargement si pas de cache
               onResolved={({ city }) => setGeoCity(city ? String(city) : null)}
+              onStatusChange={(status) => setGeoStatus(status)}
             />
           </div>
 
