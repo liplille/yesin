@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { Link, useOutletContext } from "react-router-dom";
 import {
   PlayIcon,
   PauseIcon,
@@ -10,6 +10,7 @@ import "../index.css";
 import AuthForm from "../components/AuthForm";
 import { useAuth } from "../auth/AuthProvider";
 import TextLogo from "../components/TextLogo";
+import type { RootOutletContext } from "../layout/RootLayout";
 
 /* === ASSETS === */
 import mockupImg from "../assets/images/yesin-app-mockup.png";
@@ -20,13 +21,18 @@ import coverRestaurant from "../assets/images/cover_restaurant.jpg";
 import audioBrocante from "../assets/audios/pitch_brocante.m4a";
 import audioYesin from "../assets/audios/pitch_yesin.m4a";
 
+/** -------- Helpers -------- */
+function capitalizeFirstOnly(s: string): string {
+  const t = s.trim().toLowerCase();
+  return t ? t[0].toUpperCase() + t.slice(1) : t;
+}
+
 /** Bouton discret Play/Pause pour le message du créateur */
 function CreatorMessageButton() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1
 
-  // Crée l'élément audio une seule fois
   useEffect(() => {
     const audio = new Audio(audioYesin);
     audioRef.current = audio;
@@ -61,9 +67,7 @@ function CreatorMessageButton() {
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) {
-      audio.play().catch(() => {
-        /* ignore */
-      });
+      audio.play().catch(() => {});
     } else {
       audio.pause();
     }
@@ -86,8 +90,6 @@ function CreatorMessageButton() {
         )}
       </span>
       <span>La radio, en vrai</span>
-
-      {/* mini barre de progression discrète */}
       <span
         aria-hidden="true"
         className="ml-2 block h-1 w-14 overflow-hidden rounded bg-black/10 dark:bg-white/10"
@@ -101,10 +103,14 @@ function CreatorMessageButton() {
   );
 }
 
-function HeroCreatorMessage() {
+function HeroCreatorMessage({ geoCity }: { geoCity: string | null }) {
+  const cityDisplay = useMemo(
+    () => (geoCity ? capitalizeFirstOnly(geoCity) : null),
+    [geoCity]
+  );
+
   return (
     <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-12 md:grid-cols-2">
-      {/* Colonne gauche : promesse + CTA + bouton créateur discret */}
       <div>
         <h1 className="text-4xl font-extrabold leading-tight md:text-5xl">
           Votre voix est{" "}
@@ -121,14 +127,13 @@ function HeroCreatorMessage() {
             to="/welcome"
             className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 font-semibold text-white shadow-lg hover:opacity-90"
           >
-            🎙️ Faites-vous entendre à Lille
+            {cityDisplay
+              ? `🎙️ Faites-vous entendre à ${cityDisplay}`
+              : "🎙️ Faites-vous entendre"}
           </Link>
-
-          {/* Bouton discret Play/Pause du message du créateur */}
           <CreatorMessageButton />
         </div>
 
-        {/* Badges rapides */}
         <ul className="mt-6 flex flex-wrap gap-2 text-xs opacity-80">
           <li className="rounded-full border border-black/10 px-3 py-1 dark:border-white/15">
             Gratuit
@@ -142,7 +147,6 @@ function HeroCreatorMessage() {
         </ul>
       </div>
 
-      {/* Colonne droite : uniquement l'image (mockup) */}
       <div>
         <div className="relative">
           <div className="absolute -inset-4 -z-10 rounded-3xl bg-primary/20 blur-2xl" />
@@ -180,7 +184,6 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
   const [time, setTime] = useState(0);
   const [dur, setDur] = useState(0);
 
-  // La logique (hooks et fonctions) reste la même
   useEffect(() => {
     const audio = new Audio(tracks[index].src);
     audioRef.current = audio;
@@ -240,9 +243,7 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
 
   return (
     <div className="rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10">
-      {/* Ligne principale : rendue responsive */}
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 sm:flex-nowrap sm:justify-between">
-        {/* Groupe Cover + Infos */}
         <div className="flex min-w-[200px] flex-1 items-center gap-4">
           <img
             src={current.cover}
@@ -280,8 +281,6 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
           </div>
         </div>
 
-        {/* Commandes */}
-        {/* Commandes */}
         <div className="flex flex-shrink-0 items-center gap-2">
           <button
             onClick={prev}
@@ -289,7 +288,6 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
             aria-label="Piste précédente"
             title="Piste précédente"
           >
-            {/* Icône Précédent */}
             <BackwardIcon className="h-5 w-5" />
           </button>
           <button
@@ -303,7 +301,6 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
             }
             title={playing ? "Pause" : "Lecture"}
           >
-            {/* Icône Play/Pause */}
             {playing ? (
               <PauseIcon className="h-5 w-5" />
             ) : (
@@ -316,13 +313,11 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
             aria-label="Piste suivante"
             title="Piste suivante"
           >
-            {/* Icône Suivant */}
             <ForwardIcon className="h-5 w-5" />
           </button>
         </div>
       </div>
 
-      {/* Playlist */}
       <div className="mt-5 rounded-xl bg-white/3 p-2">
         <ul className="space-y-1 text-sm">
           {tracks.map((t, i) => {
@@ -361,13 +356,18 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
 }
 
 export default function App() {
+  const { geoCity } = useOutletContext<RootOutletContext>();
+  const cityDisplay = useMemo(
+    () => (geoCity ? capitalizeFirstOnly(geoCity) : null),
+    [geoCity]
+  );
+
   const { session } = useAuth();
+
   return (
     <main className="min-h-screen bg-bg text-fg">
-      {/* Header simple */}
+      <HeroCreatorMessage geoCity={geoCity} />
 
-      <HeroCreatorMessage />
-      {/* Alternance image/texte — LA SOLUTION */}
       <section
         id="solution"
         className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-16 md:grid-cols-2"
@@ -426,7 +426,7 @@ export default function App() {
           />
         </div>
       </section>
-      {/* Étapes en bande contrastée */}
+
       <section id="etapes" className="bg-primary/10">
         <div className="mx-auto max-w-7xl px-6 py-16">
           <h3 className="text-center text-2xl font-bold md:text-3xl">
@@ -459,7 +459,7 @@ export default function App() {
                 <p className="mt-2 text-sm opacity-80">{s.desc}</p>
                 {s.title === "Créez votre profil" && (
                   <a
-                    href="/profil" /* ou "/onboarding" selon ta route */
+                    href="/profil"
                     className="mt-3 inline-flex items-center gap-1 text-sm font-medium underline decoration-primary/60 underline-offset-4 hover:opacity-100"
                     aria-label="Créer mon profil maintenant (ouverture de l’onboarding)"
                   >
@@ -473,7 +473,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* Section Démo Enregistreur Audio */}
       <section id="demo-enregistreur" className="mx-auto max-w-7xl px-6 py-16">
         <div className="text-center">
           <h3 className="text-2xl font-bold md:text-3xl">
@@ -486,7 +485,6 @@ export default function App() {
         </div>
 
         <div className="mx-auto mt-10 grid max-w-5xl gap-8 md:grid-cols-2">
-          {/* Colonne 1: Démo de l'enregistreur */}
           <div className="rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10">
             <h4 className="mb-4 text-lg font-bold">À vous d'essayer !</h4>
             <div className="flex items-center gap-3">
@@ -506,7 +504,6 @@ export default function App() {
             </p>
           </div>
 
-          {/* Colonne 2: Lecteur Radio avec des exemples pertinents */}
           <RadioPlayer
             tracks={[
               {
@@ -526,7 +523,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* 3. Afficher cette section uniquement si l'utilisateur N'EST PAS connecté */}
       {!session && (
         <section
           id="inscription"
@@ -548,13 +544,22 @@ export default function App() {
         </section>
       )}
 
-      {/* Gros CTA final */}
       <section id="cta" className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/30 via-primary/10 to-transparent" />
         <div className="mx-auto max-w-5xl px-6 py-20 text-center">
-          <h3 className="text-3xl font-extrabold md:text-4xl">
-            Prêt à faire entendre votre histoire à Lille ?
-          </h3>
+          {cityDisplay ? (
+            <h3 className="text-3xl font-extrabold md:text-4xl">
+              {`Prêt à faire entendre votre histoire à ${cityDisplay} ?`}
+            </h3>
+          ) : (
+            <div className="space-y-2">
+              <h3 className="text-3xl font-extrabold md:text-4xl">
+                Prêt à faire entendre votre histoire ?
+              </h3>
+              <p className="text-xl">🎙️ Faites-vous entendre</p>
+            </div>
+          )}
+
           <p className="mt-2 opacity-85">
             Votre voix a de la valeur. Il est temps de la faire entendre.
           </p>
@@ -566,7 +571,6 @@ export default function App() {
           </Link>
         </div>
       </section>
-      {/* Footer */}
     </main>
   );
 }
