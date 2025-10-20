@@ -9,6 +9,7 @@ import {
   MicrophoneIcon,
 } from "@heroicons/react/24/solid";
 
+// ... (Interface DemoFile, formatTime, formatRelativeTime restent identiques) ...
 interface DemoFile {
   id: string;
   name: string;
@@ -41,6 +42,7 @@ function formatRelativeTime(dateString: string): string {
 export default function DemoPodcastPlayer() {
   const [demos, setDemos] = useState<DemoFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -50,7 +52,9 @@ export default function DemoPodcastPlayer() {
   const currentIndexRef = useRef(currentIndex);
   const demosLengthRef = useRef(demos.length);
   const isPlayingRef = useRef(isPlaying);
+  const isInitialLoadRef = useRef(true);
 
+  // ... (Hooks useEffect pour les refs, fetchDemos, chargement initial, event listener identiques) ...
   useEffect(() => {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
@@ -61,9 +65,13 @@ export default function DemoPodcastPlayer() {
     isPlayingRef.current = isPlaying;
   }, [isPlaying]);
 
-  // ➡️ Factorise la logique dans un callback réutilisable
-  const fetchDemos = useCallback(async () => {
-    setLoading(true);
+  const fetchDemos = useCallback(async (isUpdate = false) => {
+    if (!isUpdate) {
+      setLoading(true);
+    } else {
+      setIsUpdating(true);
+    }
+
     const { data, error } = await supabase.storage
       .from("demopitches")
       .list("", {
@@ -74,6 +82,8 @@ export default function DemoPodcastPlayer() {
     if (error || !data) {
       console.error("Erreur fetch demos:", error);
       setLoading(false);
+      setIsUpdating(false);
+      isInitialLoadRef.current = false;
       return;
     }
 
@@ -86,21 +96,24 @@ export default function DemoPodcastPlayer() {
       })) as DemoFile[];
 
     setDemos(filesWithUrls);
-    setLoading(false);
+
+    if (!isUpdate) {
+      setLoading(false);
+      isInitialLoadRef.current = false;
+    } else {
+      setIsUpdating(false);
+    }
   }, []);
 
-  // Chargement initial
   useEffect(() => {
     fetchDemos();
-  }, [fetchDemos]); // identique au comportement d’origine, mais réutilisable
+  }, [fetchDemos]);
 
-  // ➕ NOUVEAU : écoute l’événement "demo:uploaded" pour recharger la liste
   useEffect(() => {
     const onUploaded = (e: Event) => {
-      // Optionnel : filtrer par bucket si besoin
       const ce = e as CustomEvent<{ bucket?: string }>;
       if (!ce.detail || ce.detail.bucket === "demopitches") {
-        fetchDemos();
+        fetchDemos(true);
       }
     };
     window.addEventListener("demo:uploaded", onUploaded as EventListener);
@@ -108,7 +121,7 @@ export default function DemoPodcastPlayer() {
       window.removeEventListener("demo:uploaded", onUploaded as EventListener);
   }, [fetchDemos]);
 
-  // Setup et listeners audio (identique à la version précédente)
+  // ... (Hooks useEffect pour le setup audio, chargement piste identiques) ...
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
@@ -119,12 +132,12 @@ export default function DemoPodcastPlayer() {
     const handleEnded = () => {
       const currentIdx = currentIndexRef.current;
       const totalDemos = demosLengthRef.current;
-      if (currentIdx === totalDemos - 1) {
+      if (currentIdx < totalDemos - 1) {
+        setCurrentIndex((prev) => prev + 1);
+        setIsPlaying(true);
+      } else {
         setIsPlaying(false);
         setCurrentTime(0);
-      } else {
-        setCurrentIndex((prev) => prev + 1);
-        setIsPlaying(true); // 🔒 reste en lecture quand on avance
       }
     };
 
@@ -148,7 +161,6 @@ export default function DemoPodcastPlayer() {
     };
   }, []);
 
-  // Charger/Jouer la piste courante (conserve la logique existante)
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || demos.length === 0 || currentIndex >= demos.length) {
@@ -181,24 +193,24 @@ export default function DemoPodcastPlayer() {
         if (!audio.paused) audio.pause();
       }
     }, 0);
-  }, [currentIndex, demos, isPlaying]);
+  }, [currentIndex, demos]);
 
+  // ... (Callbacks handleNext, handlePrev, handlePlayPause, handleSelectTrack, handleSeek identiques) ...
   const handleNext = useCallback(() => {
-    if (demos.length === 0) return;
-    setCurrentIndex((prev) => (prev + 1) % demos.length);
-  }, [demos.length]);
+    if (demos.length === 0 || currentIndex >= demos.length - 1) return;
+    setCurrentIndex((prev) => prev + 1);
+  }, [demos.length, currentIndex]);
 
   const handlePrev = useCallback(() => {
-    if (demos.length === 0) return;
-    setCurrentIndex((prev) => (prev - 1 + demos.length) % demos.length);
-  }, [demos.length]);
+    if (demos.length === 0 || currentIndex <= 0) return;
+    setCurrentIndex((prev) => prev - 1);
+  }, [demos.length, currentIndex]);
 
   const handlePlayPause = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    const newState = !isPlaying;
-    setIsPlaying(newState);
-    if (newState) {
+
+    if (audio.paused) {
       audio.play().catch((e) => {
         console.error("Erreur play direct:", e);
         setIsPlaying(false);
@@ -206,6 +218,7 @@ export default function DemoPodcastPlayer() {
     } else {
       audio.pause();
     }
+    setIsPlaying(!audio.paused);
   };
 
   const handleSelectTrack = (index: number) => {
@@ -213,37 +226,42 @@ export default function DemoPodcastPlayer() {
       handlePlayPause();
     } else {
       setCurrentIndex(index);
-      if (!isPlaying) setIsPlaying(true);
+      if (!isPlaying) {
+        setIsPlaying(true);
+      }
     }
   };
 
   const handleSeek = (event: React.MouseEvent<HTMLDivElement>) => {
     const audio = audioRef.current;
-    if (!audio || !duration) return;
+    if (!audio || !duration || duration === 0) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const clickX = event.clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, clickX / rect.width));
     const newTime = ratio * duration;
     audio.currentTime = newTime;
-    setCurrentTime(newTime);
   };
 
   if (loading)
     return <div className="p-4 text-center opacity-70">Chargement...</div>;
-  if (demos.length === 0)
+  if (!loading && demos.length === 0)
     return (
       <div className="p-4 text-center opacity-70">Aucun essai à écouter.</div>
     );
 
-  const currentTrack = demos[currentIndex];
+  const currentTrack = demos.length > 0 ? demos[currentIndex] : null;
   const progressPercent =
-    duration > 0 && currentTime <= duration
+    duration > 0 && currentTime >= 0 && currentTime <= duration
       ? (currentTime / duration) * 100
       : 0;
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10 flex flex-col gap-4">
-      {/* --- Section Lecteur --- */}
+    <div
+      className={`rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10 flex flex-col gap-4 transition-opacity duration-300 ${
+        isUpdating ? "opacity-50 pointer-events-none" : ""
+      }`}
+    >
+      {/* --- Section Lecteur (identique) --- */}
       <div className="flex items-center gap-4">
         <div className="flex-shrink-0 h-20 w-20 rounded-lg bg-primary/10 flex items-center justify-center">
           <MicrophoneIcon className="h-10 w-10 text-primary/80" />
@@ -253,9 +271,8 @@ export default function DemoPodcastPlayer() {
           <p className="text-xs opacity-70">
             {currentTrack ? formatRelativeTime(currentTrack.created_at) : "--"}
           </p>
-
-          {/* Barre de progression */}
           <div className="mt-2 space-y-1">
+            {/* Barre de progression */}
             <div
               className="h-2 w-full bg-black/10 dark:bg-white/10 rounded cursor-pointer group relative"
               onClick={handleSeek}
@@ -274,8 +291,9 @@ export default function DemoPodcastPlayer() {
                 style={{ width: `${progressPercent}%` }}
               />
               <div
-                className="absolute top-1/2 left-0 h-3 w-3 -translate-y-1/2 -translate-x-1/2 rounded-full bg-primary opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity"
+                className="absolute top-1/2 left-0 h-3 w-3 -translate-y-1/2 -translate-x-1/2 rounded-full bg-primary opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity pointer-events-none"
                 style={{ left: `${progressPercent}%` }}
+                aria-hidden="true"
               ></div>
             </div>
             <div className="flex justify-between text-[10px] opacity-70">
@@ -286,14 +304,14 @@ export default function DemoPodcastPlayer() {
         </div>
       </div>
 
-      {/* --- Section Contrôles --- */}
+      {/* --- Section Contrôles (avec boutons désactivés aux extrémités) --- */}
       <div className="flex items-center justify-center gap-4">
         <button
           onClick={handlePrev}
           className="control-btn"
           aria-label="Piste précédente"
           title="Piste précédente"
-          disabled={demos.length <= 1}
+          disabled={currentIndex === 0 || demos.length <= 1}
         >
           <BackwardIcon className="h-5 w-5" />
         </button>
@@ -314,7 +332,7 @@ export default function DemoPodcastPlayer() {
           className="control-btn"
           aria-label="Piste suivante"
           title="Piste suivante"
-          disabled={demos.length <= 1}
+          disabled={currentIndex === demos.length - 1 || demos.length <= 1}
         >
           <ForwardIcon className="h-5 w-5" />
         </button>
@@ -323,7 +341,8 @@ export default function DemoPodcastPlayer() {
       {/* --- Section Playlist --- */}
       <div className="mt-2 border-t border-black/10 dark:border-white/10 pt-4">
         <h5 className="text-sm font-bold mb-2 px-2">À écouter</h5>
-        <ul className="space-y-1 max-h-40 overflow-y-auto">
+        {/* 👇 Ajout de la classe "custom-scrollbar" */}
+        <ul className="custom-scrollbar space-y-1 max-h-40 overflow-y-auto">
           {demos.map((demo, index) => (
             <li key={demo.id}>
               <button
@@ -360,7 +379,7 @@ export default function DemoPodcastPlayer() {
         </ul>
       </div>
 
-      {/* Styles locaux pour les boutons */}
+      {/* Styles locaux */}
       <style>{`
         .control-btn {
           display: flex;
@@ -370,9 +389,17 @@ export default function DemoPodcastPlayer() {
           transition: background-color 0.2s, opacity 0.2s;
           color: var(--color-fg);
           background-color: transparent;
+          outline: none;
+        }
+        .control-btn:focus-visible {
+          box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-primary);
         }
         .control-btn:hover:not(:disabled) { background-color: oklch(from var(--color-fg) l c h / 0.1); }
-        .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .control-btn:disabled {
+           opacity: 0.4;
+           cursor: not-allowed;
+           background-color: transparent;
+        }
         .control-btn:not(.play-btn) { width: 2.5rem; height: 2.5rem; }
         .play-btn {
             width: 4rem; height: 4rem;
@@ -388,6 +415,37 @@ export default function DemoPodcastPlayer() {
         div[role="slider"] {
             outline: none;
         }
+
+        /* --- 👇 NOUVEAUX STYLES POUR LA SCROLLBAR --- */
+        .custom-scrollbar {
+          /* Style pour Firefox */
+          scrollbar-width: thin;
+          scrollbar-color: oklch(from var(--color-fg) l c h / 0.3) transparent;
+        }
+        /* Style pour Chrome, Safari, Edge */
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px; /* Largeur fine */
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent; /* Fond transparent */
+          margin-block: 4px; /* Petite marge en haut/bas */
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: oklch(from var(--color-fg) l c h / 0.2); /* Couleur de la barre */
+          border-radius: 3px; /* Coins arrondis */
+          border: 1px solid transparent; /* Bordure pour éviter collage */
+          background-clip: content-box; /* Ne colore pas la bordure */
+        }
+        /* Apparence au survol de la barre */
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background-color: oklch(from var(--color-fg) l c h / 0.4);
+        }
+        /* Apparence au survol de la zone de scroll (pour faire apparaître) */
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+           background-color: oklch(from var(--color-fg) l c h / 0.3);
+        }
+        /* --- FIN NOUVEAUX STYLES --- */
+
       `}</style>
     </div>
   );
