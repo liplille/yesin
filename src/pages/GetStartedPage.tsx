@@ -460,14 +460,14 @@ export default function App() {
                 <h4 className="font-semibold">{s.title}</h4>
                 <p className="mt-2 text-sm opacity-80">{s.desc}</p>
                 {s.title === "Créez votre profil" && (
-                  <a
-                    href="/profil"
+                  <Link
+                    to="/welcome"
                     className="mt-3 inline-flex items-center gap-1 text-sm font-medium underline decoration-primary/60 underline-offset-4 hover:opacity-100"
                     aria-label="Créer mon profil maintenant (ouverture de l’onboarding)"
                   >
                     Créer mon profil maintenant
                     <span aria-hidden>→</span>
-                  </a>
+                  </Link>
                 )}
               </div>
             ))}
