@@ -12,6 +12,7 @@ import { useAuth } from "../auth/AuthProvider";
 import TextLogo from "../components/TextLogo";
 import type { RootOutletContext } from "../layout/RootLayout";
 import { DemoRecorder } from "../components/DemoRecorder"; // Nouvel import
+import DemoPlaylist from "../components/DemoPlaylist"; // <-- IMPORTER LE NOUVEAU COMPOSANT
 
 /* === ASSETS === */
 import mockupImg from "../assets/images/yesin-app-mockup.png";
@@ -488,22 +489,7 @@ export default function App() {
         <div className="mx-auto mt-10 grid max-w-5xl gap-8 md:grid-cols-2">
           <DemoRecorder />
 
-          <RadioPlayer
-            tracks={[
-              {
-                title: "Message de Léa",
-                subtitle: "Artisane locale",
-                src: audioBrocante,
-                cover: coverBrocante,
-              },
-              {
-                title: "Idée de Marc",
-                subtitle: "Restaurateur",
-                src: audioYesin,
-                cover: coverCoiffeur,
-              },
-            ]}
-          />
+          <DemoPlaylist />
         </div>
       </section>
 
