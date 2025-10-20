@@ -2,7 +2,6 @@
 import {
   MicrophoneIcon,
   StopCircleIcon,
-  PlayCircleIcon,
   PaperAirplaneIcon,
   ArrowPathIcon,
   CheckCircleIcon,
@@ -10,9 +9,9 @@ import {
 import { useRecorder } from "../hooks/useRecorder";
 import Toast from "./Toast";
 import { Link } from "react-router-dom";
-
 // On importe le visualiseur qui est déjà dans CreatePitchPage
 import { SoundWaveBars } from "../pages/CreatePitchPage";
+import { useEffect } from "react";
 
 export function DemoRecorder() {
   const {
@@ -25,16 +24,27 @@ export function DemoRecorder() {
     resetRecording,
     sendAudio,
     setError,
-  } = useRecorder();
+  } = useRecorder(); // conserve l’API actuelle du hook
 
   const handleSend = () => {
-    // Pour la démo, on envoie dans un bucket "demos"
+    // Pour la démo, on envoie dans un bucket "demopitches"
     sendAudio("demopitches");
   };
 
+  // ➕ NOUVEAU : notifier la playlist quand l’envoi est réussi
+  useEffect(() => {
+    if (status === "success") {
+      window.dispatchEvent(
+        new CustomEvent("demo:uploaded", {
+          detail: { bucket: "demopitches" },
+        })
+      );
+    }
+  }, [status]);
+
   return (
     <div className="rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10">
-      <h4 className="mb-4 text-lg font-bold">À vous d'essayer !</h4>
+      <h4 className="mb-4 text-lg font-bold">À vous d&apos;essayer !</h4>
 
       {status === "idle" && (
         <div className="flex items-center gap-3">
@@ -113,10 +123,8 @@ export function DemoRecorder() {
         </Link>
         .
       </p>
+
       <Toast message={error} onClose={() => setError(null)} />
     </div>
   );
 }
-
-// NOTE: Il faut exporter le composant SoundWaveBars depuis CreatePitchPage.tsx
-// pour pouvoir l'utiliser ici.
