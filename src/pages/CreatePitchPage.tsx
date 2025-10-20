@@ -14,7 +14,7 @@ import {
 /**
  * Visualizer à barres qui s'adapte à la largeur de son conteneur.
  */
-function SoundWaveBars({
+export function SoundWaveBars({
   color = "var(--color-primary)",
   barWidth = 1,
   gap = 1.5,

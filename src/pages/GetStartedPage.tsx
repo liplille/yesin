@@ -11,6 +11,7 @@ import AuthForm from "../components/AuthForm";
 import { useAuth } from "../auth/AuthProvider";
 import TextLogo from "../components/TextLogo";
 import type { RootOutletContext } from "../layout/RootLayout";
+import { DemoRecorder } from "../components/DemoRecorder"; // Nouvel import
 
 /* === ASSETS === */
 import mockupImg from "../assets/images/yesin-app-mockup.png";
@@ -485,24 +486,7 @@ export default function App() {
         </div>
 
         <div className="mx-auto mt-10 grid max-w-5xl gap-8 md:grid-cols-2">
-          <div className="rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10">
-            <h4 className="mb-4 text-lg font-bold">À vous d'essayer !</h4>
-            <div className="flex items-center gap-3">
-              <button className="btn rounded-full bg-primary px-4 py-2 font-medium text-white transition hover:opacity-90">
-                🎙️ Enregistrer
-              </button>
-              <div className="text-sm text-fg/70">Jusqu’à 59 secondes</div>
-              <div className="ml-auto tabular-nums text-sm">00:00</div>
-            </div>
-            <p className="mt-4 text-xs opacity-70">
-              Ceci est une démo. Votre enregistrement sera sauvegardé pendant 7
-              jours. Prêt à créer le vôtre ?{" "}
-              <Link to="/welcome" className="underline hover:text-primary">
-                C'est par ici
-              </Link>
-              .
-            </p>
-          </div>
+          <DemoRecorder />
 
           <RadioPlayer
             tracks={[
