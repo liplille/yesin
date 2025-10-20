@@ -11,10 +11,8 @@ import {
 import qrWhatsapp from "../assets/images/whatsapp-qr-code.png";
 import { useState, useRef } from "react";
 
-// ⬇️ import du composant géoloc (version avec onResolved)
 import GeoAddress from "../components/GeoAddress";
 
-// 👉 Export du type de contexte à réutiliser dans les pages
 export type RootOutletContext = {
   session: ReturnType<typeof useSupabaseAuthListener>["session"];
   geoCity: string | null;
@@ -29,7 +27,6 @@ export default function RootLayout() {
   const { session, isLoading } = useSupabaseAuthListener();
   const navigate = useNavigate();
 
-  // ⬇️ Ville détectée (null si inconnue / refusée)
   const [geoCity, setGeoCity] = useState<string | null>(null);
   const [geoStatus, setGeoStatus] = useState<string>("idle");
   const geoRef = useRef<GeoAddressHandle>(null);
@@ -39,11 +36,14 @@ export default function RootLayout() {
     navigate("/");
   };
 
+  // MODIFICATION : Logique de bascule (toggle)
   const handleGeoToggle = () => {
     if (geoRef.current) {
+      // Si la géolocalisation a réussi (active), on la désactive (efface les données)
       if (geoStatus === "success") {
         geoRef.current.clearLocate();
       } else {
+        // Sinon (inactive, refusée, en erreur...), on demande l'autorisation/la position
         geoRef.current.doLocate();
       }
     }
@@ -57,11 +57,29 @@ export default function RootLayout() {
     switch (geoStatus) {
       case "success":
         return "text-green-500";
+      case "loading":
+        return "text-yellow-500 animate-pulse";
       case "denied":
       case "error":
         return "text-red-500";
       default:
         return "text-gray-400";
+    }
+  };
+
+  // MODIFICATION : Le tooltip s'adapte à la logique de bascule
+  const getGeoTooltip = () => {
+    switch (geoStatus) {
+      case "success":
+        return "Désactiver la géolocalisation pour cette session";
+      case "loading":
+        return "Géolocalisation en cours...";
+      case "denied":
+        return "Géolocalisation refusée. Cliquez pour redemander.";
+      case "error":
+        return "Erreur de géolocalisation. Cliquez pour réessayer.";
+      default:
+        return "Activer la géolocalisation";
     }
   };
 
@@ -75,8 +93,8 @@ export default function RootLayout() {
 
           <div className="flex items-center gap-2 sm:gap-4">
             <button
-              onClick={handleGeoToggle}
-              title="Activer/Désactiver la géolocalisation"
+              onClick={handleGeoToggle} // MODIFIÉ
+              title={getGeoTooltip()} // MODIFIÉ
               className="rounded-full p-1.5 hover:bg-black/10 dark:hover:bg-white/10"
             >
               <MapPinIcon className={`h-6 w-6 ${getGeoIconColor()}`} />
@@ -98,7 +116,6 @@ export default function RootLayout() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6">
-        {/* ⬇️ On expose session + geoCity aux pages */}
         <Outlet context={{ session, geoCity } satisfies RootOutletContext} />
       </main>
 
@@ -112,11 +129,9 @@ export default function RootLayout() {
               </span>
               <span>- Pour un web plus humain. Fait à Lille. 🌱</span>
             </div>
-
-            {/* ⬇️ On met à jour geoCity dès que la géoloc résout */}
             <GeoAddress
               ref={geoRef}
-              autoRequest // ⬅️ NEW: demande au chargement si pas de cache
+              autoRequest
               onResolved={({ city }) => setGeoCity(city ? String(city) : null)}
               onStatusChange={(status) => setGeoStatus(status)}
             />

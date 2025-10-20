@@ -95,6 +95,7 @@ const GeoAddress = forwardRef(
     const [status, setStatus] = useState<Status>("idle");
     const [address, setAddress] = useState<Address | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+    const [manuallyCleared, setManuallyCleared] = useState(false);
 
     const supported =
       typeof navigator !== "undefined" && "geolocation" in navigator;
@@ -110,6 +111,7 @@ const GeoAddress = forwardRef(
     );
 
     const doLocate = useCallback(() => {
+      setManuallyCleared(false);
       if (!supported) {
         updateStatus("unsupported");
         setMessage("Votre navigateur ne supporte pas la géolocalisation.");
@@ -231,6 +233,7 @@ const GeoAddress = forwardRef(
       setAddress(null);
       updateStatus("idle");
       setMessage(null);
+      setManuallyCleared(true);
       onResolved?.({
         city: null,
         country: null,
@@ -246,6 +249,11 @@ const GeoAddress = forwardRef(
     }));
 
     useEffect(() => {
+      // CORRECTION : On ignore cet effet si une localisation est déjà en cours.
+      if (manuallyCleared || status === "loading") {
+        return;
+      }
+
       const cached = readCache();
       if (cached) {
         setAddress(cached);
@@ -260,7 +268,7 @@ const GeoAddress = forwardRef(
       } else {
         updateStatus("prompt");
       }
-    }, [onResolved, updateStatus]);
+    }, [onResolved, updateStatus, manuallyCleared, status]); // 'status' est ajouté aux dépendances
 
     useEffect(() => {
       if (!autoRequest) return;
