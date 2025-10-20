@@ -1,6 +1,4 @@
-// src/layout/RootLayout.tsx
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { useSupabaseAuthListener } from "../hooks/useSupabaseAuthListener";
 import ThemeToggle from "../components/ThemeToggle";
 import TextLogo from "../components/TextLogo";
 import { supabase } from "../lib/supabaseClient";
@@ -9,79 +7,62 @@ import {
   MapPinIcon,
 } from "@heroicons/react/24/solid";
 import qrWhatsapp from "../assets/images/whatsapp-qr-code.png";
-import { useState, useRef } from "react";
-
+import { useSupabaseAuthListener } from "../hooks/useSupabaseAuthListener";
 import GeoAddress from "../components/GeoAddress";
+import { useGeoAddress } from "../hooks/useGeoAddress";
 
 export type RootOutletContext = {
   session: ReturnType<typeof useSupabaseAuthListener>["session"];
   geoCity: string | null;
 };
 
-type GeoAddressHandle = {
-  doLocate: () => void;
-  clearLocate: () => void;
-};
-
 export default function RootLayout() {
   const { session, isLoading } = useSupabaseAuthListener();
   const navigate = useNavigate();
 
-  const [geoCity, setGeoCity] = useState<string | null>(null);
-  const [geoStatus, setGeoStatus] = useState<string>("idle");
-  const geoRef = useRef<GeoAddressHandle>(null);
+  const { status, city, label, message, doLocate, clearLocate } = useGeoAddress(
+    {
+      autoRequest: true, // garde le comportement actuel
+    }
+  );
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/");
   };
 
-  // MODIFICATION : Logique de bascule (toggle)
   const handleGeoToggle = () => {
-    if (geoRef.current) {
-      // Si la géolocalisation a réussi (active), on la désactive (efface les données)
-      if (geoStatus === "success") {
-        geoRef.current.clearLocate();
-      } else {
-        // Sinon (inactive, refusée, en erreur...), on demande l'autorisation/la position
-        geoRef.current.doLocate();
-      }
-    }
+    if (status === "success") clearLocate();
+    else doLocate();
   };
+
+  const geoIconClassByStatus: Record<string, string> = {
+    success: "text-green-500",
+    loading: "text-yellow-500 animate-pulse",
+    denied: "text-red-500",
+    error: "text-red-500",
+    idle: "text-gray-400",
+    prompt: "text-gray-400",
+    unsupported: "text-gray-400",
+  };
+  const getGeoIconColor = () => geoIconClassByStatus[status] ?? "text-gray-400";
+
+  const tooltipByStatus: Record<string, string> = {
+    success: "Désactiver la géolocalisation pour cette session",
+    loading: "Géolocalisation en cours...",
+    denied:
+      "Géolocalisation bloquée. Modifiez les paramètres du site dans votre navigateur pour l'autoriser.",
+    error: "Erreur de géolocalisation. Cliquez pour réessayer.",
+    idle: "Activer la géolocalisation",
+    prompt: "Activer la géolocalisation",
+    unsupported: "Géolocalisation non supportée",
+  };
+  const getGeoTooltip = () =>
+    tooltipByStatus[status] ?? "Activer la géolocalisation";
 
   if (isLoading) {
     return <div className="p-6">Chargement de la session…</div>;
   }
-
-  const getGeoIconColor = () => {
-    switch (geoStatus) {
-      case "success":
-        return "text-green-500";
-      case "loading":
-        return "text-yellow-500 animate-pulse";
-      case "denied":
-      case "error":
-        return "text-red-500";
-      default:
-        return "text-gray-400";
-    }
-  };
-
-  // MODIFICATION : Le tooltip s'adapte à la logique de bascule
-  const getGeoTooltip = () => {
-    switch (geoStatus) {
-      case "success":
-        return "Désactiver la géolocalisation pour cette session";
-      case "loading":
-        return "Géolocalisation en cours...";
-      case "denied":
-        return "Géolocalisation refusée. Cliquez pour redemander.";
-      case "error":
-        return "Erreur de géolocalisation. Cliquez pour réessayer.";
-      default:
-        return "Activer la géolocalisation";
-    }
-  };
 
   return (
     <div className="min-h-screen bg-bg text-fg">
@@ -93,8 +74,9 @@ export default function RootLayout() {
 
           <div className="flex items-center gap-2 sm:gap-4">
             <button
-              onClick={handleGeoToggle} // MODIFIÉ
-              title={getGeoTooltip()} // MODIFIÉ
+              onClick={handleGeoToggle}
+              title={getGeoTooltip()}
+              aria-pressed={status === "success"}
               className="rounded-full p-1.5 hover:bg-black/10 dark:hover:bg-white/10"
             >
               <MapPinIcon className={`h-6 w-6 ${getGeoIconColor()}`} />
@@ -102,7 +84,7 @@ export default function RootLayout() {
             {session && (
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 dark:border-white/10"
+                className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white/5 px-3 py-1.5 text-sm hover:bg白/10 dark:border-white/10"
                 aria-label="Se déconnecter"
                 title="Se déconnecter"
               >
@@ -116,7 +98,9 @@ export default function RootLayout() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6">
-        <Outlet context={{ session, geoCity } satisfies RootOutletContext} />
+        <Outlet
+          context={{ session, geoCity: city } satisfies RootOutletContext}
+        />
       </main>
 
       <footer className="border-t border-black/10 dark:border-white/10">
@@ -129,11 +113,13 @@ export default function RootLayout() {
               </span>
               <span>- Pour un web plus humain. Fait à Lille. 🌱</span>
             </div>
+
             <GeoAddress
-              ref={geoRef}
-              autoRequest
-              onResolved={({ city }) => setGeoCity(city ? String(city) : null)}
-              onStatusChange={(status) => setGeoStatus(status)}
+              status={status}
+              label={label}
+              message={message}
+              onLocate={doLocate}
+              onRefresh={doLocate}
             />
           </div>
 
