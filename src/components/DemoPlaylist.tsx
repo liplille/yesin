@@ -6,6 +6,7 @@ import {
   PauseIcon,
   ForwardIcon,
   BackwardIcon,
+  RadioIcon,
   MicrophoneIcon,
 } from "@heroicons/react/24/solid";
 import { requestAudioFocus, onAudioFocus } from "../utils/audioFocus";
@@ -272,10 +273,10 @@ export default function DemoPodcastPlayer() {
       <div className="flex items-center gap-3 sm:gap-4">
         {/* MODIFIÉ: h-16 w-16 sm:h-20 sm:w-20 et icône h-8 w-8 sm:h-10 sm:w-10 */}
         <div className="flex-shrink-0 h-16 w-16 sm:h-20 sm:w-20 rounded-lg bg-primary/10 flex items-center justify-center">
-          <MicrophoneIcon className="h-8 w-8 sm:h-10 sm:w-10 text-primary/80" />
+          <RadioIcon className="h-8 w-8 sm:h-10 sm:w-10 text-primary/80" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold truncate">Pitch de la communauté</p>
+          <p className="font-semibold truncate">Derniers essais partagés</p>
           <p className="text-xs opacity-70">
             {currentTrack ? formatRelativeTime(currentTrack.created_at) : "--"}
           </p>
