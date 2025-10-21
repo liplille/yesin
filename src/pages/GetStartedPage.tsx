@@ -14,6 +14,7 @@ import TextLogo from "../components/TextLogo";
 import type { RootOutletContext } from "../layout/RootLayout";
 import { DemoRecorder } from "../components/DemoRecorder"; // Nouvel import
 import DemoPlaylist from "../components/DemoPlaylist"; // <-- IMPORTER LE NOUVEAU COMPOSANT
+import { requestAudioFocus, onAudioFocus } from "../utils/audioFocus";
 
 /* === ASSETS === */
 import mockupImg from "../assets/images/yesin-app-mockup.png";
@@ -40,6 +41,10 @@ function CreatorMessageButton() {
     const audio = new Audio(audioYesin);
     audioRef.current = audio;
 
+    const cleanupFocus = onAudioFocus("creator", () => {
+      audio.pause();
+    });
+
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
     const onEnded = () => {
@@ -56,25 +61,23 @@ function CreatorMessageButton() {
     audio.addEventListener("ended", onEnded);
     audio.addEventListener("timeupdate", onTime);
 
-    // Nettoyage au démontage
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause(); // Met en pause si l'audio joue
-        // Retire les écouteurs d'événements pour éviter les fuites mémoire
-        audioRef.current.removeEventListener("play", onPlay);
-        audioRef.current.removeEventListener("pause", onPause);
-        audioRef.current.removeEventListener("ended", onEnded);
-        audioRef.current.removeEventListener("timeupdate", onTime);
-        audioRef.current = null; // Libère la référence
-      }
+      audio.pause();
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("timeupdate", onTime);
+      audioRef.current = null;
+      cleanupFocus();
     };
-  }, []); // Tableau de dépendances vide pour exécuter useEffect une seule fois au montage
+  }, []);
 
   const toggle = () => {
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) {
-      audio.play().catch((e) => console.error("Erreur de lecture audio:", e)); // Ajout d'un catch pour les erreurs
+      requestAudioFocus("creator");
+      audio.play().catch((e) => console.error("Erreur de lecture audio:", e));
     } else {
       audio.pause();
     }
@@ -206,6 +209,8 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
     const audio = new Audio(tracks[index].src);
     audioRef.current = audio;
 
+    const cleanupFocus = onAudioFocus("radio", () => audio.pause());
+
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
     const onEnded = () => next();
@@ -218,8 +223,7 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
     audio.addEventListener("timeupdate", onTime);
     audio.addEventListener("loadedmetadata", onLoaded);
 
-    const shouldAutoplay = playing;
-    if (shouldAutoplay) audio.play().catch(() => {});
+    if (playing) audio.play().catch(() => {});
 
     return () => {
       audio.pause();
@@ -229,6 +233,7 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
       audio.removeEventListener("timeupdate", onTime);
       audio.removeEventListener("loadedmetadata", onLoaded);
       audioRef.current = null;
+      cleanupFocus();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]);
@@ -236,8 +241,12 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
   const playPause = () => {
     const a = audioRef.current;
     if (!a) return;
-    if (a.paused) a.play().catch(() => {});
-    else a.pause();
+    if (a.paused) {
+      requestAudioFocus("radio");
+      a.play().catch(() => {});
+    } else {
+      a.pause();
+    }
   };
 
   const prev = () => {

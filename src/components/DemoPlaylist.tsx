@@ -8,6 +8,7 @@ import {
   BackwardIcon,
   MicrophoneIcon,
 } from "@heroicons/react/24/solid";
+import { requestAudioFocus, onAudioFocus } from "../utils/audioFocus";
 
 interface DemoFile {
   id: string;
@@ -123,6 +124,10 @@ export default function DemoPodcastPlayer() {
     const audio = new Audio();
     audioRef.current = audio;
 
+    const cleanupFocus = onAudioFocus("playlist", () => {
+      audio.pause();
+    });
+
     const updateProgress = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration);
 
@@ -155,6 +160,7 @@ export default function DemoPodcastPlayer() {
       audio.removeEventListener("play", handlePlay);
       audio.removeEventListener("pause", handlePause);
       audioRef.current = null;
+      cleanupFocus;
     };
   }, []);
 
@@ -207,6 +213,7 @@ export default function DemoPodcastPlayer() {
     if (!audio) return;
 
     if (audio.paused) {
+      requestAudioFocus("playlist");
       audio.play().catch((e) => {
         console.error("Erreur play direct:", e);
         setIsPlaying(false);
@@ -214,6 +221,7 @@ export default function DemoPodcastPlayer() {
     } else {
       audio.pause();
     }
+
     setIsPlaying(!audio.paused);
   };
 
@@ -224,6 +232,7 @@ export default function DemoPodcastPlayer() {
       setCurrentIndex(index);
       if (!isPlaying) {
         setIsPlaying(true);
+        requestAudioFocus("playlist");
       }
     }
   };

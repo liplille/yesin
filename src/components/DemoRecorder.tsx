@@ -5,13 +5,14 @@ import {
   PaperAirplaneIcon,
   ArrowPathIcon,
   CheckCircleIcon,
-  ArrowPathIcon as SpinnerIcon, // Utiliser une icône existante pour le spinner
+  ArrowPathIcon as SpinnerIcon, // Icône utilisée comme spinner
 } from "@heroicons/react/24/solid";
-import { useRecorder } from "../hooks/useRecorder";
-import Toast from "./Toast";
 import { Link } from "react-router-dom";
+import { useEffect, useCallback } from "react";
+import Toast from "./Toast";
 import { SoundWaveBars } from "../pages/CreatePitchPage";
-import { useEffect } from "react";
+import { useRecorder } from "../hooks/useRecorder";
+import { requestAudioFocus, onAudioFocus } from "../utils/audioFocus";
 
 export function DemoRecorder() {
   const {
@@ -26,10 +27,15 @@ export function DemoRecorder() {
     setError,
   } = useRecorder();
 
+  const memoizedStopRecording = useCallback(() => {
+    stopRecording();
+  }, [stopRecording]);
+
   const handleSend = () => {
     sendAudio("demopitches");
   };
 
+  // Notifier la playlist de recharger quand un upload termine
   useEffect(() => {
     if (status === "success") {
       window.dispatchEvent(
@@ -40,24 +46,35 @@ export function DemoRecorder() {
     }
   }, [status]);
 
-  // Détermine si on est en train de demander la permission
+  // Quand on commence à enregistrer, on prend le focus audio (stoppe les lecteurs actifs)
+  useEffect(() => {
+    if (status === "recording") {
+      requestAudioFocus("recorder");
+    }
+  }, [status]);
+
+  // Si on perd le focus (un autre acteur prend la main), on stop l'enregistrement en cours
+  useEffect(() => {
+    return onAudioFocus("recorder", () => {
+      if (status === "recording") {
+        memoizedStopRecording();
+      }
+    });
+  }, [status, memoizedStopRecording]);
+
   const isRequestingPermission = status === "requesting";
 
   return (
-    // Le padding principal p-4 sm:p-5 est déjà là, c'est bien.
     <div className="rounded-2xl border border-black/10 bg-white/5 p-4 sm:p-5 shadow-lg dark:border-white/10 flex flex-col h-full">
       <h4 className="mb-4 text-lg font-bold text-center flex-shrink-0">
         À vous d&apos;essayer !
       </h4>
 
-      {/* MODIFIÉ: Ajout de w-full et overflow-hidden pour mieux contraindre le contenu interne */}
-      <div className="flex-grow flex flex-col justify-center items-center min-h-[160px] w-full overflow-hidden">
+      <div className="flex-grow flex flex-col justify-center items-center min-h-[160px]">
         {(status === "idle" || status === "requesting") && (
-          // w-full était déjà là, c'est bien.
           <div className="flex flex-col items-center justify-center gap-4 w-full">
             <SoundWaveBars isActive={false} dimWhenIdle={true} />
-            {/* MODIFIÉ: Ajout de w-full à ce conteneur pour assurer qu'il prend la largeur */}
-            <div className="flex flex-col items-center gap-2 w-full">
+            <div className="flex flex-col items-center gap-2">
               <button
                 onClick={startRecording}
                 className={`btn rounded-full bg-primary px-4 py-2 font-medium text-white transition hover:opacity-90 ${
@@ -78,8 +95,8 @@ export function DemoRecorder() {
             </div>
           </div>
         )}
+
         {status === "recording" && !isRequestingPermission && (
-          // w-full était déjà là, c'est bien.
           <div className="flex flex-col items-center gap-4 w-full">
             <SoundWaveBars isActive={true} />
             <button
@@ -94,16 +111,14 @@ export function DemoRecorder() {
             </div>
           </div>
         )}
+
         {status === "recorded" && audioBlob && (
-          // MODIFIÉ: Retrait de px-0 sm:px-2, le padding parent p-4/sm:p-5 suffit.
-          <div className="flex flex-col items-center gap-4 w-full">
+          <div className="flex flex-col items-center gap-4 w-full px-0 sm:px-2">
             <audio
               src={URL.createObjectURL(audioBlob)}
               controls
-              // MODIFIÉ: Ajout de max-w-full pour s'assurer qu'il ne dépasse pas
-              className="w-full max-w-full mb-4"
+              className="w-full mb-4"
             />
-            {/* w-full était déjà là, c'est bien. flex-col sm:flex-row gère le responsive des boutons */}
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full">
               <button
                 onClick={resetRecording}
@@ -122,6 +137,7 @@ export function DemoRecorder() {
             </div>
           </div>
         )}
+
         {(status === "uploading" || status === "success") && (
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             {status === "uploading" && (
@@ -137,7 +153,6 @@ export function DemoRecorder() {
         )}
       </div>
 
-      {/* Le texte du bas gère déjà sa taille avec text-[11px] sm:text-xs */}
       <p className="mt-4 text-[11px] sm:text-xs opacity-70 text-center flex-shrink-0">
         Ceci est une démo. Votre enregistrement sera sauvegardé pendant 7 jours.
         Prêt à enregistrer votre vraie publicité audio ?{" "}
