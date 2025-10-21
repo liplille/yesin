@@ -9,12 +9,13 @@ import {
 } from "@heroicons/react/24/solid";
 import "../index.css";
 import AuthForm from "../components/AuthForm";
-import { useAuth } from "../auth/AuthProvider";
 import TextLogo from "../components/TextLogo";
 import type { RootOutletContext } from "../layout/RootLayout";
 import { DemoRecorder } from "../components/DemoRecorder"; // Nouvel import
 import DemoPlaylist from "../components/DemoPlaylist"; // <-- IMPORTER LE NOUVEAU COMPOSANT
 import { requestAudioFocus, onAudioFocus } from "../utils/audioFocus";
+import ExitIntentModal from "../components/ExitIntentModal";
+import { useExitIntent } from "../hooks/useExitIntent";
 
 /* === ASSETS === */
 import mockupImg from "../assets/images/yesin-app-mockup.png";
@@ -383,14 +384,20 @@ function RadioPlayer({ tracks }: { tracks: Track[] }) {
 }
 
 export default function App() {
-  const { geoCity } = useOutletContext<RootOutletContext>();
+  const { session, geoCity } = useOutletContext<RootOutletContext>();
   const cityDisplay = useMemo(
     () => (geoCity ? capitalizeFirstOnly(geoCity) : null),
     [geoCity]
   );
+  const isLoggedIn = !!session;
 
-  const { session } = useAuth();
-
+  const { open, dismiss } = useExitIntent({
+    sessionKey: "exit-intent:getstarted:dismissed",
+    topBoundary: 8,
+    delay: 80,
+    mobileVisibility: true,
+    enabled: !isLoggedIn, // ⬅️ désactive complètement si connecté
+  });
   return (
     // RootLayout gère le padding principal (px-4 sm:px-6)
     <main className="min-h-screen bg-bg text-fg">
@@ -580,6 +587,7 @@ export default function App() {
           </Link>
         </div>
       </section>
+      <ExitIntentModal open={!isLoggedIn && open} onClose={dismiss} />
     </main>
   );
 }
