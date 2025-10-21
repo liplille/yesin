@@ -1,3 +1,4 @@
+// src/pages/GetStartedPage.tsx
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import {
@@ -112,7 +113,9 @@ function HeroCreatorMessage({ geoCity }: { geoCity: string | null }) {
   );
 
   return (
-    <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-12 md:grid-cols-2">
+    // Utilise lg: pour passer en 2 colonnes à 1024px
+    <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 py-12 lg:grid-cols-2">
+      {/* Retiré px-6 ici, géré par RootLayout */}
       <div>
         <h1 className="text-4xl font-extrabold leading-tight md:text-5xl">
           Votre voix est{" "}
@@ -367,14 +370,18 @@ export default function App() {
   const { session } = useAuth();
 
   return (
+    // RootLayout gère le padding principal (px-4 sm:px-6)
     <main className="min-h-screen bg-bg text-fg">
       <HeroCreatorMessage geoCity={geoCity} />
 
       <section
         id="solution"
-        className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-16 md:grid-cols-2"
+        // Utilise lg: pour passer en 2 colonnes à 1024px
+        className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 py-16 lg:grid-cols-2"
+        // Retiré px-6
       >
-        <div className="md:pr-8">
+        {/* Utilise lg: pour le padding interne à 1024px */}
+        <div className="lg:pr-8">
           <h3 className="text-3xl font-bold">
             La Solution :{" "}
             <span className="text-primary">
@@ -403,7 +410,8 @@ export default function App() {
           </div>
         </div>
 
-        <div className="md:pl-8">
+        {/* Utilise lg: pour le padding interne à 1024px */}
+        <div className="lg:pl-8">
           <RadioPlayer
             tracks={[
               {
@@ -430,11 +438,16 @@ export default function App() {
       </section>
 
       <section id="etapes" className="bg-primary/10">
-        <div className="mx-auto max-w-7xl px-6 py-16">
-          <h3 className="text-center text-2xl font-bold md:text-3xl">
+        {/* Retiré px-6 */}
+        <div className="mx-auto max-w-7xl py-16">
+          <h3 className="text-center text-2xl font-bold md:text-3xl px-4">
+            {" "}
+            {/* Ajout px-4 ici si besoin */}
             Simple comme 1, 2, 3.
           </h3>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+          {/* Utilise lg: pour passer en 3 colonnes à 1024px */}
+          {/* Ajout px-4 ici si besoin pour le conteneur grid */}
+          <div className="mt-10 grid gap-6 lg:grid-cols-3 px-4">
             {[
               {
                 icon: "👤",
@@ -475,8 +488,10 @@ export default function App() {
         </div>
       </section>
 
-      <section id="demo-enregistreur" className="mx-auto max-w-7xl px-6 py-16">
-        <div className="text-center">
+      {/* MODIFIÉ: Retiré padding horizontal de la section */}
+      <section id="demo-enregistreur" className="mx-auto max-w-7xl py-16">
+        {/* Ajout d'un padding pour le texte si nécessaire */}
+        <div className="text-center px-4">
           <h3 className="text-2xl font-bold md:text-3xl">
             La radio locale, ça sonne comme ça.
           </h3>
@@ -486,9 +501,10 @@ export default function App() {
           </p>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-5xl gap-8 md:grid-cols-2">
+        {/* MODIFIÉ: gap-4 lg:gap-8, retiré max-w/mx-auto pour mobile */}
+        <div className="mt-10 grid gap-4 lg:gap-8 lg:grid-cols-2 lg:max-w-5xl lg:mx-auto">
+          {/* Les composants internes ont déjà p-4 sm:p-5 */}
           <DemoRecorder />
-
           <DemoPlaylist />
         </div>
       </section>
@@ -498,7 +514,10 @@ export default function App() {
           id="inscription"
           className="relative overflow-hidden bg-primary/10"
         >
-          <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+          {/* Retiré px-6 */}
+          <div className="mx-auto max-w-2xl py-20 text-center px-4">
+            {" "}
+            {/* Ajout px-4 */}
             <h3 className="text-3xl font-extrabold md:text-4xl">
               Votre publicité audio{" "}
               <span className="underline">vraiment gratuite</span> vous attend.
@@ -516,7 +535,10 @@ export default function App() {
 
       <section id="cta" className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/30 via-primary/10 to-transparent" />
-        <div className="mx-auto max-w-5xl px-6 py-20 text-center">
+        {/* Retiré px-6 */}
+        <div className="mx-auto max-w-5xl py-20 text-center px-4">
+          {" "}
+          {/* Ajout px-4 */}
           {cityDisplay ? (
             <h3 className="text-3xl font-extrabold md:text-4xl">
               {`Prêt à faire entendre votre histoire à ${cityDisplay} ?`}
@@ -529,7 +551,6 @@ export default function App() {
               <p className="text-xl">🎙️ Faites-vous entendre</p>
             </div>
           )}
-
           <p className="mt-2 opacity-85">
             Votre voix a de la valeur. Il est temps de la faire entendre.
           </p>

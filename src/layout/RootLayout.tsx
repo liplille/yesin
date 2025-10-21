@@ -1,3 +1,4 @@
+// src/layout/RootLayout.tsx
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import TextLogo from "../components/TextLogo";
@@ -67,7 +68,8 @@ export default function RootLayout() {
   return (
     <div className="min-h-screen bg-bg text-fg">
       <header className="sticky top-0 z-30 border-b border-black/10 bg-bg/70 backdrop-blur dark:border-white/10">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        {/* MODIFIÉ: px-4 sm:px-6 */}
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
           <NavLink to="/" className="flex items-center gap-2">
             <TextLogo />
           </NavLink>
@@ -84,7 +86,7 @@ export default function RootLayout() {
             {session && (
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white/5 px-3 py-1.5 text-sm hover:bg白/10 dark:border-white/10"
+                className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 dark:border-white/10"
                 aria-label="Se déconnecter"
                 title="Se déconnecter"
               >
@@ -97,14 +99,16 @@ export default function RootLayout() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-6">
+      {/* MODIFIÉ: px-4 sm:px-6 */}
+      <main className="mx-auto max-w-7xl px-4 sm:px-6">
         <Outlet
           context={{ session, geoCity: city } satisfies RootOutletContext}
         />
       </main>
 
       <footer className="border-t border-black/10 dark:border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm opacity-80 md:flex-row">
+        {/* MODIFIÉ: px-4 sm:px-6 */}
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:px-6 py-8 text-sm opacity-80 md:flex-row">
           <div className="flex flex-col items-center gap-2 text-center md:items-start md:text-left">
             <div className="flex items-baseline gap-2">
               <span>© {new Date().getFullYear()}</span>

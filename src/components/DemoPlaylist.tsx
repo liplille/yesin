@@ -9,7 +9,6 @@ import {
   MicrophoneIcon,
 } from "@heroicons/react/24/solid";
 
-// ... (Interface DemoFile, formatTime, formatRelativeTime restent identiques) ...
 interface DemoFile {
   id: string;
   name: string;
@@ -54,7 +53,6 @@ export default function DemoPodcastPlayer() {
   const isPlayingRef = useRef(isPlaying);
   const isInitialLoadRef = useRef(true);
 
-  // ... (Hooks useEffect pour les refs, fetchDemos, chargement initial, event listener identiques) ...
   useEffect(() => {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
@@ -121,7 +119,6 @@ export default function DemoPodcastPlayer() {
       window.removeEventListener("demo:uploaded", onUploaded as EventListener);
   }, [fetchDemos]);
 
-  // ... (Hooks useEffect pour le setup audio, chargement piste identiques) ...
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
@@ -195,7 +192,6 @@ export default function DemoPodcastPlayer() {
     }, 0);
   }, [currentIndex, demos]);
 
-  // ... (Callbacks handleNext, handlePrev, handlePlayPause, handleSelectTrack, handleSeek identiques) ...
   const handleNext = useCallback(() => {
     if (demos.length === 0 || currentIndex >= demos.length - 1) return;
     setCurrentIndex((prev) => prev + 1);
@@ -256,15 +252,18 @@ export default function DemoPodcastPlayer() {
       : 0;
 
   return (
+    // MODIFIÉ: p-4 sm:p-5
     <div
-      className={`rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10 flex flex-col gap-4 transition-opacity duration-300 ${
+      className={`rounded-2xl border border-black/10 bg-white/5 p-4 sm:p-5 shadow-lg dark:border-white/10 flex flex-col gap-4 transition-opacity duration-300 ${
         isUpdating ? "opacity-50 pointer-events-none" : ""
       }`}
     >
-      {/* --- Section Lecteur (identique) --- */}
-      <div className="flex items-center gap-4">
-        <div className="flex-shrink-0 h-20 w-20 rounded-lg bg-primary/10 flex items-center justify-center">
-          <MicrophoneIcon className="h-10 w-10 text-primary/80" />
+      {/* --- Section Lecteur --- */}
+      {/* MODIFIÉ: gap-3 sm:gap-4 */}
+      <div className="flex items-center gap-3 sm:gap-4">
+        {/* MODIFIÉ: h-16 w-16 sm:h-20 sm:w-20 et icône h-8 w-8 sm:h-10 sm:w-10 */}
+        <div className="flex-shrink-0 h-16 w-16 sm:h-20 sm:w-20 rounded-lg bg-primary/10 flex items-center justify-center">
+          <MicrophoneIcon className="h-8 w-8 sm:h-10 sm:w-10 text-primary/80" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold truncate">Pitch de la communauté</p>
@@ -304,7 +303,7 @@ export default function DemoPodcastPlayer() {
         </div>
       </div>
 
-      {/* --- Section Contrôles (avec boutons désactivés aux extrémités) --- */}
+      {/* --- Section Contrôles --- */}
       <div className="flex items-center justify-center gap-4">
         <button
           onClick={handlePrev}
@@ -341,7 +340,6 @@ export default function DemoPodcastPlayer() {
       {/* --- Section Playlist --- */}
       <div className="mt-2 border-t border-black/10 dark:border-white/10 pt-4">
         <h5 className="text-sm font-bold mb-2 px-2">À écouter</h5>
-        {/* 👇 Ajout de la classe "custom-scrollbar" */}
         <ul className="custom-scrollbar space-y-1 max-h-40 overflow-y-auto">
           {demos.map((demo, index) => (
             <li key={demo.id}>
@@ -416,36 +414,30 @@ export default function DemoPodcastPlayer() {
             outline: none;
         }
 
-        /* --- 👇 NOUVEAUX STYLES POUR LA SCROLLBAR --- */
+        /* --- Styles pour la Scrollbar --- */
         .custom-scrollbar {
-          /* Style pour Firefox */
           scrollbar-width: thin;
           scrollbar-color: oklch(from var(--color-fg) l c h / 0.3) transparent;
         }
-        /* Style pour Chrome, Safari, Edge */
         .custom-scrollbar::-webkit-scrollbar {
-          width: 6px; /* Largeur fine */
+          width: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent; /* Fond transparent */
-          margin-block: 4px; /* Petite marge en haut/bas */
+          background: transparent;
+          margin-block: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: oklch(from var(--color-fg) l c h / 0.2); /* Couleur de la barre */
-          border-radius: 3px; /* Coins arrondis */
-          border: 1px solid transparent; /* Bordure pour éviter collage */
-          background-clip: content-box; /* Ne colore pas la bordure */
+          background-color: oklch(from var(--color-fg) l c h / 0.2);
+          border-radius: 3px;
+          border: 1px solid transparent;
+          background-clip: content-box;
         }
-        /* Apparence au survol de la barre */
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background-color: oklch(from var(--color-fg) l c h / 0.4);
         }
-        /* Apparence au survol de la zone de scroll (pour faire apparaître) */
         .custom-scrollbar:hover::-webkit-scrollbar-thumb {
            background-color: oklch(from var(--color-fg) l c h / 0.3);
         }
-        /* --- FIN NOUVEAUX STYLES --- */
-
       `}</style>
     </div>
   );

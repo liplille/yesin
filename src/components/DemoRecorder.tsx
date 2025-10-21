@@ -44,24 +44,28 @@ export function DemoRecorder() {
   const isRequestingPermission = status === "requesting";
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white/5 p-5 shadow-lg dark:border-white/10 flex flex-col h-full">
+    // MODIFIÉ: p-4 sm:p-5
+    <div className="rounded-2xl border border-black/10 bg-white/5 p-4 sm:p-5 shadow-lg dark:border-white/10 flex flex-col h-full">
       <h4 className="mb-4 text-lg font-bold text-center flex-shrink-0">
         À vous d&apos;essayer !
       </h4>
 
-      <div className="flex-grow flex flex-col justify-center items-center min-h-[180px]">
-        {/* --- MODIFICATION : Afficher cet état pour idle ET requesting --- */}
+      {/* MODIFIÉ: min-h-[180px] ajusté et max-w-xs retiré */}
+      <div className="flex-grow flex flex-col justify-center items-center min-h-[160px]">
+        {" "}
+        {/* Ajusté min-h */}
         {(status === "idle" || status === "requesting") && (
-          <div className="flex flex-col items-center justify-center gap-4 w-full max-w-xs">
-            {/* Waveform inactive */}
+          <div className="flex flex-col items-center justify-center gap-4 w-full">
+            {" "}
+            {/* Retiré max-w-xs */}
             <SoundWaveBars isActive={false} dimWhenIdle={true} />
             <div className=" flex flex-col items-center gap-2">
               <button
                 onClick={startRecording}
                 className={`btn rounded-full bg-primary px-4 py-2 font-medium text-white transition hover:opacity-90 ${
-                  isRequestingPermission ? "opacity-70 cursor-not-allowed" : "" // Style pendant la requête
+                  isRequestingPermission ? "opacity-70 cursor-not-allowed" : ""
                 }`}
-                disabled={isRequestingPermission} // Désactiver pendant la requête
+                disabled={isRequestingPermission}
               >
                 {isRequestingPermission ? (
                   <SpinnerIcon className="h-5 w-5 inline-block mr-2 align-text-bottom animate-spin" />
@@ -70,33 +74,31 @@ export function DemoRecorder() {
                 )}
                 {isRequestingPermission ? "Autorisation..." : "Enregistrer"}
               </button>
-              <div className="text-sm text-fg/70">Jusqu’à 59 secondes</div>
+              {/* MODIFIÉ: text-xs sm:text-sm */}
+              <div className="text-xs sm:text-sm text-fg/70">
+                Jusqu’à 59 secondes
+              </div>
             </div>
           </div>
         )}
-
-        {/* --- L'état recording ne s'affiche que si on enregistre vraiment --- */}
-        {status === "recording" &&
-          !isRequestingPermission && ( // Assure qu'on n'est plus en requesting
-            <div className="flex flex-col items-center gap-4 w-full">
-              <SoundWaveBars isActive={true} />
-              <button
-                onClick={stopRecording}
-                className="btn rounded-full bg-red-600 px-4 py-2 font-medium text-white transition hover:opacity-90"
-              >
-                <StopCircleIcon className="h-5 w-5 inline-block mr-2 align-text-bottom" />
-                Arrêter
-              </button>
-              <div className="text-2xl font-bold tabular-nums animate-pulse text-red-500">
-                0:{countdown.toString().padStart(2, "0")}
-              </div>
+        {status === "recording" && !isRequestingPermission && (
+          <div className="flex flex-col items-center gap-4 w-full">
+            <SoundWaveBars isActive={true} />
+            <button
+              onClick={stopRecording}
+              className="btn rounded-full bg-red-600 px-4 py-2 font-medium text-white transition hover:opacity-90"
+            >
+              <StopCircleIcon className="h-5 w-5 inline-block mr-2 align-text-bottom" />
+              Arrêter
+            </button>
+            <div className="text-2xl font-bold tabular-nums animate-pulse text-red-500">
+              0:{countdown.toString().padStart(2, "0")}
             </div>
-          )}
-
-        {/* --- Les autres états restent inchangés --- */}
+          </div>
+        )}
         {status === "recorded" && audioBlob && (
-          <div className="flex flex-col items-center gap-4 w-full px-2">
-            {/* ... lecteur audio et boutons ... */}
+          // MODIFIÉ: px-0 sm:px-2
+          <div className="flex flex-col items-center gap-4 w-full px-0 sm:px-2">
             <audio
               src={URL.createObjectURL(audioBlob)}
               controls
@@ -120,10 +122,8 @@ export function DemoRecorder() {
             </div>
           </div>
         )}
-
         {(status === "uploading" || status === "success") && (
           <div className="flex flex-col items-center justify-center gap-4 text-center">
-            {/* ... messages uploading/success ... */}
             {status === "uploading" && (
               <p className="animate-pulse">Envoi en cours...</p>
             )}
@@ -137,8 +137,8 @@ export function DemoRecorder() {
         )}
       </div>
 
-      <p className="mt-4 text-xs opacity-70 text-center flex-shrink-0">
-        {/* ... Texte descriptif ... */}
+      {/* MODIFIÉ: text-[11px] sm:text-xs */}
+      <p className="mt-4 text-[11px] sm:text-xs opacity-70 text-center flex-shrink-0">
         Ceci est une démo. Votre enregistrement sera sauvegardé pendant 7 jours.
         Prêt à enregistrer votre vraie publicité audio ?{" "}
         <Link to="/welcome" className="underline hover:text-primary">
