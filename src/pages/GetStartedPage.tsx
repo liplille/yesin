@@ -501,9 +501,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* MODIFIÉ: Retiré padding horizontal de la section */}
       <section id="demo-enregistreur" className="mx-auto max-w-7xl py-16">
-        {/* Ajout d'un padding pour le texte si nécessaire */}
         <div className="text-center px-4">
           <h3 className="text-2xl font-bold md:text-3xl">
             La radio locale, ça sonne comme ça.
@@ -514,9 +512,7 @@ export default function App() {
           </p>
         </div>
 
-        {/* MODIFIÉ: gap-4 lg:gap-8, retiré max-w/mx-auto pour mobile */}
-        <div className="mt-10 grid gap-4 lg:gap-8 lg:grid-cols-2 lg:max-w-5xl lg:mx-auto">
-          {/* Les composants internes ont déjà p-4 sm:p-5 */}
+        <div className="mt-10 grid grid-cols-1 items-stretch gap-10 lg:grid-cols-2">
           <DemoRecorder />
           <DemoPlaylist />
         </div>

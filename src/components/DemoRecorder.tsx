@@ -44,22 +44,20 @@ export function DemoRecorder() {
   const isRequestingPermission = status === "requesting";
 
   return (
-    // MODIFIÉ: p-4 sm:p-5
+    // Le padding principal p-4 sm:p-5 est déjà là, c'est bien.
     <div className="rounded-2xl border border-black/10 bg-white/5 p-4 sm:p-5 shadow-lg dark:border-white/10 flex flex-col h-full">
       <h4 className="mb-4 text-lg font-bold text-center flex-shrink-0">
         À vous d&apos;essayer !
       </h4>
 
-      {/* MODIFIÉ: min-h-[180px] ajusté et max-w-xs retiré */}
-      <div className="flex-grow flex flex-col justify-center items-center min-h-[160px]">
-        {" "}
-        {/* Ajusté min-h */}
+      {/* MODIFIÉ: Ajout de w-full et overflow-hidden pour mieux contraindre le contenu interne */}
+      <div className="flex-grow flex flex-col justify-center items-center min-h-[160px] w-full overflow-hidden">
         {(status === "idle" || status === "requesting") && (
+          // w-full était déjà là, c'est bien.
           <div className="flex flex-col items-center justify-center gap-4 w-full">
-            {" "}
-            {/* Retiré max-w-xs */}
             <SoundWaveBars isActive={false} dimWhenIdle={true} />
-            <div className=" flex flex-col items-center gap-2">
+            {/* MODIFIÉ: Ajout de w-full à ce conteneur pour assurer qu'il prend la largeur */}
+            <div className="flex flex-col items-center gap-2 w-full">
               <button
                 onClick={startRecording}
                 className={`btn rounded-full bg-primary px-4 py-2 font-medium text-white transition hover:opacity-90 ${
@@ -74,7 +72,6 @@ export function DemoRecorder() {
                 )}
                 {isRequestingPermission ? "Autorisation..." : "Enregistrer"}
               </button>
-              {/* MODIFIÉ: text-xs sm:text-sm */}
               <div className="text-xs sm:text-sm text-fg/70">
                 Jusqu’à 59 secondes
               </div>
@@ -82,6 +79,7 @@ export function DemoRecorder() {
           </div>
         )}
         {status === "recording" && !isRequestingPermission && (
+          // w-full était déjà là, c'est bien.
           <div className="flex flex-col items-center gap-4 w-full">
             <SoundWaveBars isActive={true} />
             <button
@@ -97,13 +95,15 @@ export function DemoRecorder() {
           </div>
         )}
         {status === "recorded" && audioBlob && (
-          // MODIFIÉ: px-0 sm:px-2
-          <div className="flex flex-col items-center gap-4 w-full px-0 sm:px-2">
+          // MODIFIÉ: Retrait de px-0 sm:px-2, le padding parent p-4/sm:p-5 suffit.
+          <div className="flex flex-col items-center gap-4 w-full">
             <audio
               src={URL.createObjectURL(audioBlob)}
               controls
-              className="w-full mb-4"
+              // MODIFIÉ: Ajout de max-w-full pour s'assurer qu'il ne dépasse pas
+              className="w-full max-w-full mb-4"
             />
+            {/* w-full était déjà là, c'est bien. flex-col sm:flex-row gère le responsive des boutons */}
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full">
               <button
                 onClick={resetRecording}
@@ -137,7 +137,7 @@ export function DemoRecorder() {
         )}
       </div>
 
-      {/* MODIFIÉ: text-[11px] sm:text-xs */}
+      {/* Le texte du bas gère déjà sa taille avec text-[11px] sm:text-xs */}
       <p className="mt-4 text-[11px] sm:text-xs opacity-70 text-center flex-shrink-0">
         Ceci est une démo. Votre enregistrement sera sauvegardé pendant 7 jours.
         Prêt à enregistrer votre vraie publicité audio ?{" "}

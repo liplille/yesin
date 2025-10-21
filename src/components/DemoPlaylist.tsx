@@ -254,7 +254,7 @@ export default function DemoPodcastPlayer() {
   return (
     // MODIFIÉ: p-4 sm:p-5
     <div
-      className={`rounded-2xl border border-black/10 bg-white/5 p-4 sm:p-5 shadow-lg dark:border-white/10 flex flex-col gap-4 transition-opacity duration-300 ${
+      className={`h-full rounded-2xl border border-black/10 bg-white/5 p-4 sm:p-5 shadow-lg dark:border-white/10 flex flex-col gap-4 transition-opacity duration-300 ${
         isUpdating ? "opacity-50 pointer-events-none" : ""
       }`}
     >
@@ -340,7 +340,7 @@ export default function DemoPodcastPlayer() {
       {/* --- Section Playlist --- */}
       <div className="mt-2 border-t border-black/10 dark:border-white/10 pt-4">
         <h5 className="text-sm font-bold mb-2 px-2">À écouter</h5>
-        <ul className="custom-scrollbar space-y-1 max-h-40 overflow-y-auto">
+        <ul className="custom-scrollbar space-y-1 flex-1 min-h-24 overflow-y-auto">
           {demos.map((demo, index) => (
             <li key={demo.id}>
               <button
