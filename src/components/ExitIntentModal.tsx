@@ -88,8 +88,8 @@ export default function ExitIntentModal({ open, onClose }: Props) {
             Êtes-vous sûr(e) de vouloir manquer l'opportunité d'enregistrer
             votre <strong className="text-primary">pub audio gratuite</strong> ?
             Elle sera diffusée sur notre{" "}
-            <strong className="text-primary">radio locale</strong> pour les
-            habitants de votre quartier.
+            <strong className="text-primary">radio locale</strong> pour toucher
+            un maximum de monde.
           </p>
 
           {/* Boutons */}
