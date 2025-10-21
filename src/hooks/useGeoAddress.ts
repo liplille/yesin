@@ -65,7 +65,6 @@ export function useGeoAddress(opts?: { autoRequest?: boolean }) {
   const [status, setStatus] = useState<Status>("idle");
   const [address, setAddress] = useState<Address | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  // AJOUT : Ce "verrou" empêche la réactivation automatique après une désactivation manuelle.
   const [isManuallyCleared, setIsManuallyCleared] = useState(false);
 
   // init (cache → success | prompt)
@@ -82,11 +81,10 @@ export function useGeoAddress(opts?: { autoRequest?: boolean }) {
     } else {
       setStatus("prompt");
     }
-  }, [supported]);
+  }, [supported]); //
 
   const doLocate = useCallback(() => {
-    // Quand l'utilisateur clique pour activer, on retire le verrou.
-    setIsManuallyCleared(false);
+    setIsManuallyCleared(false); // Quand l'utilisateur clique pour activer, on retire le verrou.
 
     if (!supported) {
       setStatus("unsupported");
@@ -102,18 +100,27 @@ export function useGeoAddress(opts?: { autoRequest?: boolean }) {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
 
-          const url = new URL("https://nominatim.openstreetmap.org/reverse");
-          url.searchParams.set("format", "jsonv2");
-          url.searchParams.set("lat", String(lat));
-          url.searchParams.set("lon", String(lon));
-          url.searchParams.set("zoom", "18");
-          url.searchParams.set("addressdetails", "1");
+          // ----->> CORRECTION ICI <<-----
+          // Utilise le chemin relatif pour passer par le proxy Vite
+          const proxyUrl = `/nominatim-api/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
 
-          const res = await fetch(url.toString(), {
-            headers: { "Accept-Language": navigator.language || "fr-FR" },
+          // Appel fetch avec l'URL du proxy
+          const res = await fetch(proxyUrl, {
+            headers: {
+              "Accept-Language": navigator.language || "fr-FR",
+              // L'User-Agent est ajouté par le proxy dans vite.config.ts
+            },
           });
-          if (!res.ok)
+          // ----->> FIN CORRECTION <<-----
+
+          if (!res.ok) {
+            console.error(
+              "Nominatim API response error:",
+              res.status,
+              res.statusText
+            ); // Log plus détaillé
             throw new Error(`Reverse geocoding failed (${res.status})`);
+          }
           const data = await res.json();
 
           const a = data?.address ?? {};
@@ -133,12 +140,19 @@ export function useGeoAddress(opts?: { autoRequest?: boolean }) {
           writeCache(value);
           setStatus("success");
         } catch (e) {
-          console.error(e);
+          console.error("Error during fetch or processing:", e); // Log l'erreur
           setStatus("error");
-          setMessage("Impossible de déterminer l’adresse.");
+          // Message d'erreur plus précis si possible
+          setMessage(
+            e instanceof Error && e.message.includes("fetch")
+              ? "Erreur réseau lors de la récupération de l'adresse."
+              : "Impossible de déterminer l’adresse."
+          );
         }
       },
       (err) => {
+        // Gestion des erreurs de géolocalisation
+        console.error("Geolocation error:", err.code, err.message);
         if (err.code === err.PERMISSION_DENIED) {
           setStatus("denied");
           setMessage(
@@ -155,9 +169,10 @@ export function useGeoAddress(opts?: { autoRequest?: boolean }) {
           setMessage("Erreur de géolocalisation.");
         }
       },
+      // Options de géolocalisation
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 }
     );
-  }, [supported]);
+  }, [supported]); // Dépendances pour useCallback
 
   const clearLocate = useCallback(() => {
     try {
@@ -166,9 +181,8 @@ export function useGeoAddress(opts?: { autoRequest?: boolean }) {
     setAddress(null);
     setStatus(supported ? "prompt" : "unsupported");
     setMessage(null);
-    // On pose le verrou pour bloquer la réactivation automatique.
-    setIsManuallyCleared(true);
-  }, [supported]);
+    setIsManuallyCleared(true); // On pose le verrou pour bloquer la réactivation automatique.
+  }, [supported]); //
 
   // auto request (optionnel)
   useEffect(() => {
@@ -198,7 +212,7 @@ export function useGeoAddress(opts?: { autoRequest?: boolean }) {
     if (status === "unsupported") return "Géolocalisation non supportée";
     if (status === "error") return "Adresse indisponible";
     return "Partager ma position pour afficher l’adresse";
-  }, [status, address]);
+  }, [status, address]); //
 
   return {
     status,

@@ -56,21 +56,25 @@ function CreatorMessageButton() {
     audio.addEventListener("ended", onEnded);
     audio.addEventListener("timeupdate", onTime);
 
+    // Nettoyage au démontage
     return () => {
-      audio.pause();
-      audio.removeEventListener("play", onPlay);
-      audio.removeEventListener("pause", onPause);
-      audio.removeEventListener("ended", onEnded);
-      audio.removeEventListener("timeupdate", onTime);
-      audioRef.current = null;
+      if (audioRef.current) {
+        audioRef.current.pause(); // Met en pause si l'audio joue
+        // Retire les écouteurs d'événements pour éviter les fuites mémoire
+        audioRef.current.removeEventListener("play", onPlay);
+        audioRef.current.removeEventListener("pause", onPause);
+        audioRef.current.removeEventListener("ended", onEnded);
+        audioRef.current.removeEventListener("timeupdate", onTime);
+        audioRef.current = null; // Libère la référence
+      }
     };
-  }, []);
+  }, []); // Tableau de dépendances vide pour exécuter useEffect une seule fois au montage
 
   const toggle = () => {
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) {
-      audio.play().catch(() => {});
+      audio.play().catch((e) => console.error("Erreur de lecture audio:", e)); // Ajout d'un catch pour les erreurs
     } else {
       audio.pause();
     }
@@ -80,25 +84,34 @@ function CreatorMessageButton() {
     <button
       type="button"
       onClick={toggle}
-      className="inline-flex items-center gap-2 rounded-2xl border border-black/10 bg-white/5 px-4 py-2 text-sm font-medium hover:bg-white/10 dark:border-white/10"
+      className="inline-flex items-center gap-2 rounded-2xl border border-black/10 bg-white/5 px-4 py-2 text-sm font-medium hover:bg-white/10 dark:border-white/10 overflow-hidden" // Ajout overflow-hidden
       aria-pressed={playing}
       aria-label="La radio, en vrai"
       title="La radio, en vrai"
     >
-      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white">
+      {/* Icone */}
+      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white flex-shrink-0">
+        {" "}
+        {/* Ajout flex-shrink-0 */}
         {playing ? (
           <PauseIcon className="h-3 w-3" />
         ) : (
           <PlayIcon className="h-3 w-3" />
         )}
       </span>
-      <span>La radio, en vrai</span>
+      {/* Texte */}
+      <span className="flex-shrink-0 whitespace-nowrap">
+        La radio, en vrai
+      </span>{" "}
+      {/* Ajout flex-shrink-0 et whitespace-nowrap */}
+      {/* Barre de progression */}
       <span
         aria-hidden="true"
-        className="ml-2 block h-1 w-14 overflow-hidden rounded bg-black/10 dark:bg-white/10"
+        // flex-1 pour occuper l'espace, pas de min-w
+        className="flex-1 block h-1 overflow-hidden rounded bg-black/10 dark:bg-white/10"
       >
         <span
-          className="block h-full bg-primary transition-[width]"
+          className="block h-full bg-primary transition-[width] duration-100 ease-linear" // Ajout duration et ease-linear pour une transition plus douce
           style={{ width: `${Math.round(progress * 100)}%` }}
         />
       </span>
@@ -127,7 +140,7 @@ function HeroCreatorMessage({ geoCity }: { geoCity: string | null }) {
           communauté qui vous entoure. 100% gratuit pour un web plus humain.
         </p>
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row flex-wrap">
           <Link
             to="/welcome"
             className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 font-semibold text-white shadow-lg hover:opacity-90"

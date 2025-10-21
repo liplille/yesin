@@ -68,7 +68,7 @@ export default function RootLayout() {
   return (
     <div className="min-h-screen bg-bg text-fg">
       <header className="sticky top-0 z-30 border-b border-black/10 bg-bg/70 backdrop-blur dark:border-white/10">
-        {/* MODIFIÉ: px-4 sm:px-6 */}
+        {/* Padding ajusté */}
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
           <NavLink to="/" className="flex items-center gap-2">
             <TextLogo />
@@ -99,7 +99,7 @@ export default function RootLayout() {
         </div>
       </header>
 
-      {/* MODIFIÉ: px-4 sm:px-6 */}
+      {/* Padding ajusté */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6">
         <Outlet
           context={{ session, geoCity: city } satisfies RootOutletContext}
@@ -107,15 +107,16 @@ export default function RootLayout() {
       </main>
 
       <footer className="border-t border-black/10 dark:border-white/10">
-        {/* MODIFIÉ: px-4 sm:px-6 */}
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:px-6 py-8 text-sm opacity-80 md:flex-row">
+        {/* Padding ajusté, taille texte mobile, gap mobile */}
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 sm:px-6 py-8 text-xs sm:text-sm opacity-80 md:flex-row md:gap-4">
+          {/* Centrage mobile */}
           <div className="flex flex-col items-center gap-2 text-center md:items-start md:text-left">
-            <div className="flex items-baseline gap-2">
+            <div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1 md:justify-start">
               <span>© {new Date().getFullYear()}</span>
               <span className="inline-flex items-baseline">
                 <TextLogo />™
               </span>
-              <span>- Pour un web plus humain. Fait à Lille. 🌱</span>
+              <span>Pour un web plus humain. Fait à Lille. 🌱</span>
             </div>
 
             <GeoAddress
@@ -133,9 +134,10 @@ export default function RootLayout() {
               alt="QR WhatsApp"
               className="hidden h-10 w-10 rounded bg-white p-1 md:block"
             />
+            {/* Bouton WhatsApp ajusté */}
             <a
               href="https://wa.me/3366668573"
-              className="rounded-lg bg-green-500 px-3 py-1 text-white md:hidden"
+              className="rounded-lg bg-green-500 px-3 py-1.5 text-xs text-white md:hidden"
             >
               Contact WhatsApp
             </a>
