@@ -83,10 +83,11 @@ export default function RootLayout() {
             >
               <MapPinIcon className={`h-6 w-6 ${getGeoIconColor()}`} />
             </button>
+            <ThemeToggle />
             {session && (
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 dark:border-white/10"
+                className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 hover:text-red-500 dark:border-white/10 transition-colors"
                 aria-label="Se déconnecter"
                 title="Se déconnecter"
               >
@@ -94,7 +95,6 @@ export default function RootLayout() {
                 <span className="hidden sm:inline">Déconnexion</span>
               </button>
             )}
-            <ThemeToggle />
           </div>
         </div>
       </header>
