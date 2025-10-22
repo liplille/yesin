@@ -20,10 +20,11 @@ import { useExitIntent } from "../hooks/useExitIntent";
 /* === ASSETS === */
 import mockupImg from "../assets/images/yesin-app-mockup.png";
 import coverBrocante from "../assets/images/cover_brocante.png";
-import coverCoiffeur from "../assets/images/cover_coiffeur.png";
+import coverImmobilier from "../assets/images/cover_immobilier.png";
 import coverRestaurant from "../assets/images/cover_restaurant.jpg";
-
+import audioRestaurant from "../assets/audios/pitch_restaurant.m4a";
 import audioBrocante from "../assets/audios/pitch_brocante.m4a";
+import audioImmobilier from "../assets/audios/pitch_immobilier.m4a";
 import audioYesin from "../assets/audios/pitch_yesin.m4a";
 
 /** -------- Helpers -------- */
@@ -444,9 +445,9 @@ export default function App() {
           <RadioPlayer
             tracks={[
               {
-                title: "Le Volcano Burger",
+                title: "Le Lil'Restô",
                 subtitle: "Restaurant indépendant",
-                src: audioYesin,
+                src: audioRestaurant,
                 cover: coverRestaurant,
               },
               {
@@ -456,10 +457,10 @@ export default function App() {
                 cover: coverBrocante,
               },
               {
-                title: "L'Atelier du Coiffeur",
-                subtitle: "Une coupe qui vous ressemble",
-                src: audioYesin,
-                cover: coverCoiffeur,
+                title: "Le phare immobilier",
+                subtitle: "L'agence proche de la mer",
+                src: audioImmobilier,
+                cover: coverImmobilier,
               },
             ]}
           />
