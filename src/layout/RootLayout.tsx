@@ -127,14 +127,20 @@ export default function RootLayout() {
               onRefresh={doLocate}
             />
           </div>
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex md:items-center md:gap-3">
+              <div className="flex flex-col text-xs text-right">
+                {" "}
+                <span className="font-semibold">Une question ?</span>
+                <span className="opacity-70">Scannez pour WhatsApp</span>
+              </div>
+              <img
+                src={qrWhatsapp}
+                alt="QR WhatsApp"
+                className="h-12 w-12 rounded bg-white p-1"
+              />
+            </div>
 
-          <div className="flex items-center gap-6">
-            <img
-              src={qrWhatsapp}
-              alt="QR WhatsApp"
-              className="hidden h-10 w-10 rounded bg-white p-1 md:block"
-            />
-            {/* Bouton WhatsApp ajusté */}
             <a
               href="https://wa.me/3366668573"
               className="rounded-lg bg-green-500 px-3 py-1.5 text-xs text-white md:hidden"
