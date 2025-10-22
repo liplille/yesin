@@ -1,96 +1,69 @@
 // src/hooks/useGeoAddress.ts
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+// OPTION A: Appel d'une Supabase Edge Function distante (hébergée)
+// - Ajoute les bons headers (Authorization + apikey) pour éviter 401
+// - Gère denied/timeout/network/rate_limited/forbidden/upstream_error/bad_request/internal
+// - Auto-locate au mount uniquement si permission déjà "granted" (Permissions API)
 
-/**
- * Configuration
- */
-const GEOCODER_URL = import.meta.env.VITE_PUBLIC_GEOCODE_URL as
-  | string
-  | undefined;
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
+
+// ----------------------- Config -----------------------
+
+const GEOCODER_URL = import.meta.env.VITE_PUBLIC_GEOCODE_URL || ""; // https://<ref>.supabase.co/functions/v1/geocode
 const DEFAULT_LANG = "fr";
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1h
-const ROUND_COORDS = 5; // précision pour la clé de cache lat/lon
 
-/**
- * Types d'erreur côté hook
- */
+// IMPORTANT: on a besoin de l'anon key pour appeler la function si pas de session
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+
+// ----------------------- Types -----------------------
+
 export type GeoErrorCode =
-  | "denied" // permission navigateur refusée
-  | "unsupported" // geolocation indisponible
-  | "timeout" // délai dépassé (nav ou fetch)
-  | "network" // erreur réseau fetch
-  | "rate_limited" // 429 Nominatim
-  | "forbidden" // 403 Nominatim
-  | "upstream_error" // 5xx/erreur autre Nominatim (via proxy)
-  | "bad_request" // mauvais paramètres envoyés
-  | "internal" // erreur inattendue (client)
-  | "missing_config"; // VITE_PUBLIC_GEOCODE_URL absent
+  | "denied"
+  | "unsupported"
+  | "timeout"
+  | "network"
+  | "rate_limited"
+  | "forbidden"
+  | "upstream_error"
+  | "bad_request"
+  | "internal"
+  | "missing_config";
 
 export type GeoStatus = "idle" | "locating" | "loading" | "success" | "error";
 
 export type GeoAddress = {
-  line: string; // ligne d'adresse formatée
+  line: string;
   city?: string | null;
   postcode?: string | null;
   country?: string | null;
   lat: number;
   lon: number;
-  raw?: any; // payload Nominatim utile si besoin
+  raw?: any;
 };
 
 export type UseGeoAddressOptions = {
-  lang?: string; // langue pour Nominatim (fr par défaut)
-  autoLocateOnMount?: boolean; // true => tente la géoloc au mount
-  highAccuracy?: boolean; // geolocation option
-  timeoutMs?: number; // geolocation timeout
-  maximumAgeMs?: number; // geolocation cache age
+  lang?: string;
+  autoLocateOnMount?: boolean; // false recommandé pour éviter le warning ; gating activé si true
+  highAccuracy?: boolean;
+  timeoutMs?: number;
+  maximumAgeMs?: number;
 };
 
-export type UseGeoAddressResult = {
-  status: GeoStatus;
-  error: { code: GeoErrorCode; message: string } | null;
-  coords: { lat: number; lon: number } | null;
-  address: GeoAddress | null;
-  /**
-   * Démarre une géolocalisation navigateur puis reverse-geocode côté Edge.
-   */
-  locate: () => Promise<void>;
-  /**
-   * Reverse geocode sans géolocalisation (tu passes lat/lon).
-   */
-  reverse: (lat: number, lon: number) => Promise<GeoAddress | null>;
-  /**
-   * Recherche textuelle d'adresse (forward search). Retourne une liste condensée.
-   */
-  search: (query: string, limit?: number) => Promise<GeoAddress[]>;
-  /**
-   * Reset les états (utile si on veut relancer proprement)
-   */
-  reset: () => void;
-};
+// ----------------------- Utils -----------------------
 
-/* ------------------------------------------
- * Utils
- * ------------------------------------------ */
-
-function roundCoord(n: number, digits = ROUND_COORDS) {
-  return Number(n.toFixed(digits));
+function ckReverse(lat: number, lon: number, lang: string) {
+  return `geocode:reverse:${lat.toFixed(4)},${lon.toFixed(4)}:${lang}`;
 }
-
-function cacheKeyReverse(lat: number, lon: number, lang: string) {
-  return `geocode:reverse:${roundCoord(lat)},${roundCoord(lon)}:${lang}`;
-}
-
-function cacheKeySearch(q: string, lang: string, limit: number) {
+function ckSearch(q: string, lang: string, limit: number) {
   return `geocode:search:${q.trim().toLowerCase()}:${lang}:${limit}`;
 }
 
 function readCache<T>(key: string): T | null {
-  if (typeof window === "undefined") return null;
   try {
-    const str = localStorage.getItem(key);
-    if (!str) return null;
-    const { t, v } = JSON.parse(str);
+    const s = localStorage.getItem(key);
+    if (!s) return null;
+    const { t, v } = JSON.parse(s);
     if (Date.now() - t > CACHE_TTL_MS) {
       localStorage.removeItem(key);
       return null;
@@ -102,19 +75,16 @@ function readCache<T>(key: string): T | null {
 }
 
 function writeCache<T>(key: string, value: T) {
-  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value }));
   } catch {
-    // ignore quota errors
+    // quota ignore
   }
 }
 
-function formatAddressFromNominatimReverse(p: any): GeoAddress {
-  // reverse renvoie un objet
-  const a = p?.address ?? {};
+function formatReverse(data: any): GeoAddress {
+  const a = data?.address ?? {};
   const parts = [
-    p?.name,
     a?.house_number && a?.road ? `${a.house_number} ${a.road}` : a?.road,
     a?.neighbourhood,
     a?.suburb,
@@ -126,148 +96,131 @@ function formatAddressFromNominatimReverse(p: any): GeoAddress {
     .join(", ");
 
   return {
-    line: parts || p?.display_name || "",
+    line: parts || data?.display_name || "",
     city: a?.city || a?.town || a?.village || a?.municipality || null,
     postcode: a?.postcode ?? null,
     country: a?.country ?? null,
-    lat: Number(p?.lat),
-    lon: Number(p?.lon),
-    raw: p,
+    lat: parseFloat(data?.lat),
+    lon: parseFloat(data?.lon),
+    raw: data,
   };
 }
 
-function formatAddressFromNominatimSearch(p: any): GeoAddress {
-  // search renvoie un tableau d'objets
-  const a = p?.address ?? {};
-  const parts = [
-    p?.name,
-    a?.house_number && a?.road ? `${a.house_number} ${a.road}` : a?.road,
-    a?.neighbourhood,
-    a?.suburb,
-    a?.city || a?.town || a?.village || a?.municipality,
-    a?.postcode,
-    a?.country,
-  ]
-    .filter(Boolean)
-    .join(", ");
+function formatSearch(list: any[]): GeoAddress[] {
+  return list.map((item) => {
+    const a = item?.address ?? {};
+    const parts = [
+      a?.house_number && a?.road ? `${a.house_number} ${a.road}` : a?.road,
+      a?.neighbourhood,
+      a?.suburb,
+      a?.city || a?.town || a?.village || a?.municipality,
+      a?.postcode,
+      a?.country,
+    ]
+      .filter(Boolean)
+      .join(", ");
 
-  return {
-    line: parts || p?.display_name || "",
-    city: a?.city || a?.town || a?.village || a?.municipality || null,
-    postcode: a?.postcode ?? null,
-    country: a?.country ?? null,
-    lat: Number(p?.lat),
-    lon: Number(p?.lon),
-    raw: p,
-  };
+    return {
+      line: parts || item?.display_name || "",
+      city: a?.city || a?.town || a?.village || a?.municipality || null,
+      postcode: a?.postcode ?? null,
+      country: a?.country ?? null,
+      lat: parseFloat(item?.lat),
+      lon: parseFloat(item?.lon),
+      raw: item,
+    };
+  });
 }
 
 function mapServerError(json: any): { code: GeoErrorCode; message: string } {
   const code = (json?.code as GeoErrorCode) ?? "upstream_error";
-  const message =
-    json?.message ??
-    (
-      {
-        rate_limited: "Trop de requêtes. Réessayez dans quelques instants.",
-        forbidden: "Accès refusé par le service d'adressage.",
-        upstream_error: "Le service d'adressage est indisponible.",
-        bad_request: "Requête invalide.",
-        timeout: "Délai dépassé.",
-        internal: "Erreur interne.",
-      } as Record<GeoErrorCode, string>
-    )[code] ??
-    "Erreur inconnue.";
-  return { code, message };
+  const defaultMsg: Record<GeoErrorCode, string> = {
+    denied: "Permission de géolocalisation refusée.",
+    unsupported: "Votre navigateur ne supporte pas la géolocalisation.",
+    timeout: "La demande a expiré.",
+    network: "Erreur réseau.",
+    rate_limited: "Trop de requêtes. Réessayez plus tard.",
+    forbidden: "Accès interdit par le service d'adressage.",
+    upstream_error: "Le service d'adressage est indisponible.",
+    bad_request: "Requête invalide.",
+    internal: "Erreur interne.",
+    missing_config: "VITE_PUBLIC_GEOCODE_URL n'est pas configuré.",
+  };
+  return {
+    code,
+    message: json?.message ?? defaultMsg[code] ?? "Erreur inconnue.",
+  };
 }
 
-/* ------------------------------------------
- * Appels HTTP (via Edge Function)
- * ------------------------------------------ */
+// ----------------------- HTTP vers Edge Function -----------------------
+
+async function buildAuthHeaders(): Promise<HeadersInit> {
+  // Si l'utilisateur est connecté, on privilégie son access_token (JWT).
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token || SUPABASE_ANON_KEY;
+
+  // Les functions Supabase attendent généralement ces deux headers :
+  // - Authorization: Bearer <token>
+  // - apikey: <anon key>
+  const headers: HeadersInit = {
+    Authorization: `Bearer ${token}`,
+  };
+  if (SUPABASE_ANON_KEY) headers["apikey"] = SUPABASE_ANON_KEY;
+  return headers;
+}
 
 async function callReverse(
-  urlBase: string,
   lat: number,
   lon: number,
   lang: string,
   signal?: AbortSignal
-): Promise<GeoAddress> {
-  const u = new URL(urlBase);
-  u.searchParams.set("lat", String(lat));
-  u.searchParams.set("lon", String(lon));
-  u.searchParams.set("lang", lang);
+) {
+  const headers = await buildAuthHeaders();
+  const url = new URL(GEOCODER_URL);
+  url.searchParams.set("lat", String(lat));
+  url.searchParams.set("lon", String(lon));
+  url.searchParams.set("lang", lang);
 
-  const resp = await fetch(u.toString(), { signal });
-  let json: any = null;
+  const resp = await fetch(url.toString(), { signal, headers });
+  const json = await resp.json().catch(() => ({}));
 
-  try {
-    json = await resp.json();
-  } catch {
-    throw {
-      code: "upstream_error",
-      message: `Réponse invalide (${resp.status})`,
-    } as {
-      code: GeoErrorCode;
-      message: string;
-    };
-  }
-
-  if (!resp.ok || !json) {
+  if (!resp.ok || json?.ok !== true) {
+    // map 401/403 pour clarté:
+    if (resp.status === 401 || resp.status === 403) {
+      throw { code: "forbidden", message: "Accès non autorisé à la fonction." };
+    }
     throw mapServerError(json);
   }
-  if (json.ok !== true) {
-    throw mapServerError(json);
-  }
-
-  return formatAddressFromNominatimReverse(json.data);
+  return json.data;
 }
 
 async function callSearch(
-  urlBase: string,
   q: string,
   lang: string,
   limit: number,
   signal?: AbortSignal
-): Promise<GeoAddress[]> {
-  const u = new URL(urlBase);
-  u.searchParams.set("q", q);
-  u.searchParams.set("lang", lang);
-  u.searchParams.set("limit", String(limit));
+) {
+  const headers = await buildAuthHeaders();
+  const url = new URL(GEOCODER_URL);
+  url.searchParams.set("q", q);
+  url.searchParams.set("lang", lang);
+  url.searchParams.set("limit", String(limit));
 
-  const resp = await fetch(u.toString(), { signal });
-  let json: any = null;
+  const resp = await fetch(url.toString(), { signal, headers });
+  const json = await resp.json().catch(() => ({}));
 
-  try {
-    json = await resp.json();
-  } catch {
-    throw {
-      code: "upstream_error",
-      message: `Réponse invalide (${resp.status})`,
-    } as {
-      code: GeoErrorCode;
-      message: string;
-    };
-  }
-
-  if (!resp.ok || !json) {
+  if (!resp.ok || json?.ok !== true) {
+    if (resp.status === 401 || resp.status === 403) {
+      throw { code: "forbidden", message: "Accès non autorisé à la fonction." };
+    }
     throw mapServerError(json);
   }
-  if (json.ok !== true) {
-    throw mapServerError(json);
-  }
-
-  const arr: any[] = Array.isArray(json.data)
-    ? json.data
-    : [json.data].filter(Boolean);
-  return arr.map(formatAddressFromNominatimSearch);
+  return json.data as any[];
 }
 
-/* ------------------------------------------
- * Hook principal
- * ------------------------------------------ */
+// ----------------------- Hook principal -----------------------
 
-export function useGeoAddress(
-  options: UseGeoAddressOptions = {}
-): UseGeoAddressResult {
+export function useGeoAddress(options: UseGeoAddressOptions = {}) {
   const {
     lang = DEFAULT_LANG,
     autoLocateOnMount = false,
@@ -277,38 +230,33 @@ export function useGeoAddress(
   } = options;
 
   const [status, setStatus] = useState<GeoStatus>("idle");
-  const [error, setError] = useState<UseGeoAddressResult["error"]>(null);
+  const [error, setError] = useState<{
+    code: GeoErrorCode;
+    message: string;
+  } | null>(null);
+  const [address, setAddress] = useState<GeoAddress | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
     null
   );
-  const [address, setAddress] = useState<GeoAddress | null>(null);
-
   const abortRef = useRef<AbortController | null>(null);
 
-  const urlBase = useMemo(() => GEOCODER_URL, []);
-
   const setErr = useCallback((code: GeoErrorCode, message?: string) => {
+    const messages: Record<GeoErrorCode, string> = {
+      denied: "Permission de géolocalisation refusée.",
+      unsupported: "Votre navigateur ne supporte pas la géolocalisation.",
+      timeout: "La demande a expiré.",
+      network: "Erreur réseau.",
+      rate_limited: "Trop de requêtes. Réessayez plus tard.",
+      forbidden: "Accès interdit par le service d'adressage.",
+      upstream_error: "Le service d'adressage est indisponible.",
+      bad_request: "Requête invalide.",
+      internal: "Erreur interne.",
+      missing_config: "VITE_PUBLIC_GEOCODE_URL n'est pas configuré.",
+    };
     setStatus("error");
     setError({
       code,
-      message:
-        message ??
-        (
-          {
-            denied: "Vous avez refusé la géolocalisation.",
-            unsupported: "Votre navigateur ne supporte pas la géolocalisation.",
-            timeout: "La géolocalisation a expiré.",
-            network: "Erreur réseau, vérifiez votre connexion.",
-            rate_limited: "Trop de requêtes. Réessayez bientôt.",
-            forbidden: "Accès refusé par le service d'adressage.",
-            upstream_error: "Le service d'adressage est indisponible.",
-            bad_request: "Requête invalide.",
-            internal: "Erreur interne.",
-            missing_config:
-              "Configuration manquante : VITE_PUBLIC_GEOCODE_URL n'est pas défini.",
-          } as Record<GeoErrorCode, string>
-        )[code] ??
-        "Erreur inconnue.",
+      message: message ?? messages[code] ?? "Erreur inconnue.",
     });
   }, []);
 
@@ -317,20 +265,20 @@ export function useGeoAddress(
     abortRef.current = null;
     setStatus("idle");
     setError(null);
-    setCoords(null);
     setAddress(null);
+    setCoords(null);
   }, []);
 
   const reverse = useCallback(
-    async (lat: number, lon: number) => {
-      if (!urlBase) {
+    async (lat: number, lon: number): Promise<GeoAddress | null> => {
+      if (!GEOCODER_URL) {
         setErr("missing_config");
         return null;
       }
 
       // cache
-      const ck = cacheKeyReverse(lat, lon, lang);
-      const cached = readCache<GeoAddress>(ck);
+      const key = ckReverse(lat, lon, lang);
+      const cached = readCache<GeoAddress>(key);
       if (cached) {
         setCoords({ lat, lon });
         setAddress(cached);
@@ -347,31 +295,28 @@ export function useGeoAddress(
       setError(null);
 
       try {
-        const addr = await callReverse(urlBase, lat, lon, lang, ctrl.signal);
-        writeCache(ck, addr);
+        const raw = await callReverse(lat, lon, lang, ctrl.signal);
+        const formatted = formatReverse(raw);
+        writeCache(key, formatted);
         setCoords({ lat, lon });
-        setAddress(addr);
+        setAddress(formatted);
         setStatus("success");
-        return addr;
+        return formatted;
       } catch (e: any) {
-        if (e?.name === "AbortError") {
-          setErr("timeout", "Délai dépassé.");
-          return null;
-        }
+        if (e?.name === "AbortError") return null;
         const code = (e?.code as GeoErrorCode) ?? "internal";
-        const msg = (e?.message as string) ?? undefined;
-        setErr(code, msg);
+        setErr(code, e?.message);
         return null;
       } finally {
         if (abortRef.current === ctrl) abortRef.current = null;
       }
     },
-    [lang, setErr, urlBase]
+    [lang, setErr]
   );
 
   const search = useCallback(
-    async (query: string, limit = 5) => {
-      if (!urlBase) {
+    async (query: string, limit = 5): Promise<GeoAddress[]> => {
+      if (!GEOCODER_URL) {
         setErr("missing_config");
         return [];
       }
@@ -379,8 +324,8 @@ export function useGeoAddress(
       if (!q) return [];
 
       // cache
-      const ck = cacheKeySearch(q, lang, limit);
-      const cached = readCache<GeoAddress[]>(ck);
+      const key = ckSearch(q, lang, limit);
+      const cached = readCache<GeoAddress[]>(key);
       if (cached) return cached;
 
       // abort précédent
@@ -392,99 +337,101 @@ export function useGeoAddress(
       setError(null);
 
       try {
-        const list = await callSearch(urlBase, q, lang, limit, ctrl.signal);
-        writeCache(ck, list);
+        const rawList = await callSearch(q, lang, limit, ctrl.signal);
+        const list = formatSearch(rawList);
+        writeCache(key, list);
         setStatus("success");
         return list;
       } catch (e: any) {
-        if (e?.name === "AbortError") {
-          setErr("timeout", "Délai dépassé.");
-          return [];
-        }
+        if (e?.name === "AbortError") return [];
         const code = (e?.code as GeoErrorCode) ?? "internal";
-        const msg = (e?.message as string) ?? undefined;
-        setErr(code, msg);
+        setErr(code, e?.message);
         return [];
       } finally {
         if (abortRef.current === ctrl) abortRef.current = null;
       }
     },
-    [lang, setErr, urlBase]
+    [lang, setErr]
   );
 
   const locate = useCallback(async () => {
-    if (!urlBase) {
-      setErr("missing_config");
-      return;
-    }
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
       setErr("unsupported");
       return;
     }
 
-    // abort précédent
-    abortRef.current?.abort();
-    abortRef.current = null;
-
     setStatus("locating");
     setError(null);
 
-    await new Promise<void>((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const { latitude, longitude } = pos.coords;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        await reverse(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) setErr("denied");
+        else if (err.code === err.TIMEOUT) setErr("timeout");
+        else setErr("internal", err.message);
+      },
+      {
+        enableHighAccuracy: highAccuracy,
+        timeout: timeoutMs,
+        maximumAge: maximumAgeMs,
+      }
+    );
+  }, [highAccuracy, maximumAgeMs, reverse, setErr, timeoutMs]);
 
-          // si on a déjà en cache, retour immédiat
-          const ck = cacheKeyReverse(latitude, longitude, lang);
-          const cached = readCache<GeoAddress>(ck);
-          if (cached) {
-            setCoords({ lat: latitude, lon: longitude });
-            setAddress(cached);
-            setStatus("success");
-            resolve();
-            return;
-          }
-
-          // sinon, reverse
-          await reverse(latitude, longitude);
-          resolve();
-        },
-        (err) => {
-          if (err.code === err.PERMISSION_DENIED) setErr("denied");
-          else if (err.code === err.POSITION_UNAVAILABLE) setErr("unsupported");
-          else if (err.code === err.TIMEOUT) setErr("timeout");
-          else setErr("internal", err.message);
-          resolve();
-        },
-        {
-          enableHighAccuracy: highAccuracy,
-          timeout: timeoutMs,
-          maximumAge: maximumAgeMs,
-        }
-      );
-    });
-  }, [highAccuracy, lang, maximumAgeMs, reverse, setErr, timeoutMs, urlBase]);
-
+  // Auto locate au mount UNIQUEMENT si la permission est déjà granted (sinon warning)
   useEffect(() => {
-    if (autoLocateOnMount) {
-      // ne pas bloquer le render initial
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      locate();
+    if (!options.autoLocateOnMount) return;
+    let cancelled = false;
+
+    async function maybeAuto() {
+      try {
+        // Permissions API (peut throw sur certains navigateurs)
+        // @ts-ignore
+        if (navigator?.permissions?.query) {
+          // @ts-ignore
+          const res = await navigator.permissions.query({
+            name: "geolocation" as PermissionName,
+          });
+          if (!cancelled && res.state === "granted") {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            locate();
+          }
+        }
+      } catch {
+        // ignore; on ne force pas sans gesture
+      }
     }
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    maybeAuto();
     return () => {
-      abortRef.current?.abort();
+      cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [locate, options.autoLocateOnMount]);
+
+  // ----------------------- Return (+ alias compat) -----------------------
+
+  const city = useMemo(() => address?.city ?? null, [address]);
+  const label = useMemo(() => address?.line ?? "", [address]);
+  const message = useMemo(() => error?.message ?? "", [error]);
 
   return {
     status,
     error,
-    coords,
     address,
+    coords,
     locate,
     reverse,
     search,
     reset,
+
+    // Aliases pour compatibilité ascendante
+    doLocate: locate,
+    clearLocate: reset,
+    city,
+    label,
+    message,
   };
 }
