@@ -21,11 +21,13 @@ export default function RootLayout() {
   const { session, isLoading } = useSupabaseAuthListener();
   const navigate = useNavigate();
 
-  const { status, city, label, message, doLocate, clearLocate } = useGeoAddress(
-    {
-      autoRequest: true,
-    }
-  );
+  const { status, error, address, locate, reset } = useGeoAddress({
+    autoLocateOnMount: true,
+  });
+  // Derivés pour rester compatibles avec le composant GeoAddress + Outlet
+  const city = address?.city ?? null;
+  const label = address?.line ?? "";
+  const message = error?.message ?? "";
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -33,8 +35,8 @@ export default function RootLayout() {
   };
 
   const handleGeoToggle = () => {
-    if (status === "success") clearLocate();
-    else doLocate();
+    if (status === "success") reset();
+    else locate();
   };
 
   // ... (getGeoIconColor, getGeoTooltip, isLoading check restent identiques) ...
@@ -124,8 +126,8 @@ export default function RootLayout() {
               status={status}
               label={label}
               message={message}
-              onLocate={doLocate}
-              onRefresh={doLocate} // S'assurer que c'est bien l'action voulue (rafraîchir = relocaliser)
+              onLocate={locate}
+              onRefresh={locate}
             />
           </div>
 
