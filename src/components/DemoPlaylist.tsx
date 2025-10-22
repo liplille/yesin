@@ -7,7 +7,6 @@ import {
   ForwardIcon,
   BackwardIcon,
   RadioIcon,
-  MicrophoneIcon,
 } from "@heroicons/react/24/solid";
 import { requestAudioFocus, onAudioFocus } from "../utils/audioFocus";
 

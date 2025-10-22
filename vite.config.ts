@@ -15,7 +15,7 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/nominatim-api/, ""), // Retire /nominatim-api avant d'envoyer
         // Optionnel mais recommandé: Ajouter un User-Agent
         configure: (proxy, options) => {
-          proxy.on("proxyReq", (proxyReq, req, res) => {
+          proxy.on("proxyReq", (proxyReq, _req, _res) => {
             proxyReq.setHeader(
               "User-Agent",
               "YesIn.media/1.0 (Contact: 301@gmx.fr)"

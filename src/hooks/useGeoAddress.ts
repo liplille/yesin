@@ -31,7 +31,6 @@ export type GeoErrorCode =
   | "missing_config";
 
 export type GeoStatus = "idle" | "locating" | "loading" | "success" | "error";
-
 export type GeoAddress = {
   line: string;
   city?: string | null;
@@ -223,7 +222,6 @@ async function callSearch(
 export function useGeoAddress(options: UseGeoAddressOptions = {}) {
   const {
     lang = DEFAULT_LANG,
-    autoLocateOnMount = false,
     highAccuracy = false,
     timeoutMs = 8000,
     maximumAgeMs = 30000,

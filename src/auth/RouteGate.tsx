@@ -1,4 +1,5 @@
 // src/auth/RouteGate.tsx
+import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./../auth/AuthProvider";
 import { useEphemeralFlag } from "../hooks/useEphemeralFlag";
@@ -7,7 +8,7 @@ type Mode = "any" | "auth" | "anon" | "email" | "audio";
 
 type Props = {
   mode: Mode;
-  children: JSX.Element;
+  children: ReactNode;
   redirectTo?: string;
   emailParamName?: string; // "mode"
   emailParamValue?: string; // "check-email"
