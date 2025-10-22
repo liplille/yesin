@@ -23,7 +23,7 @@ export default function RootLayout() {
 
   const { status, city, label, message, doLocate, clearLocate } = useGeoAddress(
     {
-      autoRequest: true, // garde le comportement actuel
+      autoRequest: true,
     }
   );
 
@@ -37,6 +37,7 @@ export default function RootLayout() {
     else doLocate();
   };
 
+  // ... (getGeoIconColor, getGeoTooltip, isLoading check restent identiques) ...
   const geoIconClassByStatus: Record<string, string> = {
     success: "text-green-500",
     loading: "text-yellow-500 animate-pulse",
@@ -67,6 +68,7 @@ export default function RootLayout() {
 
   return (
     <div className="min-h-screen bg-bg text-fg">
+      {/* ... (Header reste identique) ... */}
       <header className="sticky top-0 z-30 border-b border-black/10 bg-bg/70 backdrop-blur dark:border-white/10">
         {/* Padding ajusté */}
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
@@ -99,7 +101,6 @@ export default function RootLayout() {
         </div>
       </header>
 
-      {/* Padding ajusté */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6">
         <Outlet
           context={{ session, geoCity: city } satisfies RootOutletContext}
@@ -107,10 +108,10 @@ export default function RootLayout() {
       </main>
 
       <footer className="border-t border-black/10 dark:border-white/10">
-        {/* Padding ajusté, taille texte mobile, gap mobile */}
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 sm:px-6 py-8 text-xs sm:text-sm opacity-80 md:flex-row md:gap-4">
-          {/* Centrage mobile */}
-          <div className="flex flex-col items-center gap-2 text-center md:items-start md:text-left">
+          {/* Section Gauche: Copyright + Adresse */}
+          {/* === MODIFICATION ICI === Ajout de min-w-0 */}
+          <div className="flex flex-col items-center gap-2 text-center md:items-start md:text-left min-w-0">
             <div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1 md:justify-start">
               <span>© {new Date().getFullYear()}</span>
               <span className="inline-flex items-baseline">
@@ -118,29 +119,31 @@ export default function RootLayout() {
               </span>
               <span>Pour un web plus humain. Fait à Lille. 🌱</span>
             </div>
-
+            {/* GeoAddress est maintenant limité en largeur grâce à ses classes internes max-w-* */}
             <GeoAddress
               status={status}
               label={label}
               message={message}
               onLocate={doLocate}
-              onRefresh={doLocate}
+              onRefresh={doLocate} // S'assurer que c'est bien l'action voulue (rafraîchir = relocaliser)
             />
           </div>
-          <div className="flex items-center gap-4">
+
+          {/* Section Droite: Contact WhatsApp */}
+          {/* === MODIFICATION ICI === Ajout de flex-shrink-0 */}
+          <div className="flex items-center flex-shrink-0">
+            {/* Utilisation de l'option 1 suggérée précédemment pour la clarté */}
             <div className="hidden md:flex md:items-center md:gap-3">
               <div className="flex flex-col text-xs text-right">
-                {" "}
                 <span className="font-semibold">Une question ?</span>
                 <span className="opacity-70">Scannez pour WhatsApp</span>
               </div>
               <img
                 src={qrWhatsapp}
                 alt="QR WhatsApp"
-                className="h-12 w-12 rounded bg-white p-1"
+                className="h-12 w-12 rounded bg-white p-1 flex-shrink-0" // flex-shrink-0 sur le QR code
               />
             </div>
-
             <a
               href="https://wa.me/3366668573"
               className="rounded-lg bg-green-500 px-3 py-1.5 text-xs text-white md:hidden"
