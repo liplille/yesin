@@ -14,7 +14,7 @@ export default defineConfig({
         changeOrigin: true, // Nécessaire pour les hôtes virtuels
         rewrite: (path) => path.replace(/^\/nominatim-api/, ""), // Retire /nominatim-api avant d'envoyer
         // Optionnel mais recommandé: Ajouter un User-Agent
-        configure: (proxy, options) => {
+        configure: (proxy, _options) => {
           proxy.on("proxyReq", (proxyReq, _req, _res) => {
             proxyReq.setHeader(
               "User-Agent",

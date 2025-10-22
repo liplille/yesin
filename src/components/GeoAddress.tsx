@@ -1,6 +1,5 @@
 // src/components/GeoAddress.tsx
-import type { Status } from "../hooks/useGeoAddress";
-
+import type { GeoStatus } from "../hooks/useGeoAddress"; // <-- GeoStatus ici
 export default function GeoAddress({
   status,
   label,
@@ -8,7 +7,7 @@ export default function GeoAddress({
   onLocate,
   onRefresh,
 }: {
-  status: Status;
+  status: GeoStatus;
   label: string;
   message?: string | null;
   onLocate: () => void;
