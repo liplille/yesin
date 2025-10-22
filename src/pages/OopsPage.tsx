@@ -1,7 +1,7 @@
 // src/pages/NotFoundPage.tsx
 import { Link } from "react-router-dom";
 
-export default function NotFoundPage() {
+export default function OopsPage() {
   return (
     <div className="py-20 text-center">
       <h1 className="text-3xl font-bold mb-2">Page introuvable</h1>
