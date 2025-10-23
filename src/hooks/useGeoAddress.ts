@@ -30,7 +30,10 @@ export type GeoErrorCode =
   | "internal"
   | "missing_config";
 
+// === CORRECTION ICI ===
+// Ajout de 'error' à GeoStatus, car le hook utilise setStatus('error')
 export type GeoStatus = "idle" | "locating" | "loading" | "success" | "error";
+
 export type GeoAddress = {
   line: string;
   city?: string | null;
@@ -227,7 +230,7 @@ export function useGeoAddress(options: UseGeoAddressOptions = {}) {
     maximumAgeMs = 30000,
   } = options;
 
-  const [status, setStatus] = useState<GeoStatus>("idle");
+  const [status, setStatus] = useState<GeoStatus>("idle"); // Utilise le type corrigé
   const [error, setError] = useState<{
     code: GeoErrorCode;
     message: string;
@@ -251,7 +254,7 @@ export function useGeoAddress(options: UseGeoAddressOptions = {}) {
       internal: "Erreur interne.",
       missing_config: "VITE_PUBLIC_GEOCODE_URL n'est pas configuré.",
     };
-    setStatus("error");
+    setStatus("error"); // Met bien le statut à 'error'
     setError({
       code,
       message: message ?? messages[code] ?? "Erreur inconnue.",
@@ -354,7 +357,7 @@ export function useGeoAddress(options: UseGeoAddressOptions = {}) {
 
   const locate = useCallback(async () => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      setErr("unsupported");
+      setErr("unsupported"); // setErr met status à 'error'
       return;
     }
 
@@ -366,6 +369,8 @@ export function useGeoAddress(options: UseGeoAddressOptions = {}) {
         await reverse(pos.coords.latitude, pos.coords.longitude);
       },
       (err) => {
+        // La GeoErrorCode 'denied' est stockée dans error.code,
+        // mais le GeoStatus devient 'error' via setErr.
         if (err.code === err.PERMISSION_DENIED) setErr("denied");
         else if (err.code === err.TIMEOUT) setErr("timeout");
         else setErr("internal", err.message);
@@ -416,8 +421,8 @@ export function useGeoAddress(options: UseGeoAddressOptions = {}) {
   const message = useMemo(() => error?.message ?? "", [error]);
 
   return {
-    status,
-    error,
+    status, // Ce status peut maintenant être 'error'
+    error, // Contient le code spécifique comme 'denied'
     address,
     coords,
     locate,

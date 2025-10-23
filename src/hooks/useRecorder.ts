@@ -1,5 +1,5 @@
 // src/hooks/useRecorder.ts
-import { useState, useEffect, useRef } from "react"; // Ajout de useMemo
+import { useState, useEffect, useRef, useCallback } from "react"; // Ajout de useCallback
 import { supabase } from "../lib/supabaseClient";
 
 export type RecordingStatus =
@@ -9,7 +9,8 @@ export type RecordingStatus =
   | "recorded"
   | "error"
   | "uploading"
-  | "success";
+  | "success"
+  | "success-fading"; // Nouvel état pour la transition
 
 // --- NOUVEAU: Helper pour choisir le type MIME ---
 function pickSupportedMime(): { mime: string; ext: string } {
@@ -125,14 +126,20 @@ export function useRecorder({ duration = 59 } = {}) {
         streamRef.current = null;
       };
 
-      recorder.onerror = (event) => {
+      recorder.onerror = (event: Event) => {
+        // Type Event générique
         // Gestionnaire d'erreur pour MediaRecorder
         console.error("MediaRecorder error:", event);
         let message = "Erreur pendant l'enregistrement.";
-        // @ts-ignore Vérifier si event.error existe et a un nom ou message
-        if (event.error?.name) message += ` (${event.error.name})`;
-        // @ts-ignore
-        else if (event.error?.message) message += ` (${event.error.message})`;
+        // Tenter d'accéder à l'erreur spécifique si disponible
+        const mediaRecorderError = (event as any).error as
+          | DOMException
+          | undefined;
+        if (mediaRecorderError?.name) {
+          message += ` (${mediaRecorderError.name})`;
+        } else if (mediaRecorderError?.message) {
+          message += ` (${mediaRecorderError.message})`;
+        }
         setError(message);
         setStatus("error");
         // Essayer d'arrêter proprement le stream
@@ -172,7 +179,8 @@ export function useRecorder({ duration = 59 } = {}) {
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = useCallback(() => {
+    // Utilisation de useCallback pour la stabilité
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state === "recording"
@@ -185,9 +193,10 @@ export function useRecorder({ duration = 59 } = {}) {
         mediaRecorderRef.current.state
       );
     }
-  };
+  }, []); // Dépendances vides
 
-  const resetRecording = () => {
+  const resetRecording = useCallback(() => {
+    // Utilisation de useCallback
     // Abort ongoing recording safely
     if (
       mediaRecorderRef.current &&
@@ -195,7 +204,10 @@ export function useRecorder({ duration = 59 } = {}) {
     ) {
       mediaRecorderRef.current.onstop = null; // Détacher l'ancien onstop pour éviter la création de blob
       mediaRecorderRef.current.onerror = null; // Détacher onerror
-      mediaRecorderRef.current.stop();
+      // Vérifier si stop a déjà été appelé avant de le rappeler
+      if (mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.stop();
+      }
       console.log("Recorder stopped due to reset.");
     }
     // Stop stream tracks if they are still active
@@ -207,11 +219,22 @@ export function useRecorder({ duration = 59 } = {}) {
 
     setAudioBlob(null);
     setCountdown(duration);
-    setStatus("idle");
+    setStatus("idle"); // Revient à idle
     setError(null);
     recordingOptions.current = null; // Réinitialiser les options
     mediaRecorderRef.current = null; // Réinitialiser la ref du recorder
-  };
+  }, [duration]); // Dépend de duration
+
+  // NOUVEAU: useEffect pour gérer le reset après le fondu
+  useEffect(() => {
+    if (status === "success-fading") {
+      const fadeDuration = 300; // Doit correspondre à la durée de la transition CSS
+      const timer = setTimeout(() => {
+        resetRecording();
+      }, fadeDuration);
+      return () => clearTimeout(timer);
+    }
+  }, [status, resetRecording]);
 
   const sendAudio = async (bucket: string, fileName?: string) => {
     if (!audioBlob) {
@@ -248,13 +271,15 @@ export function useRecorder({ duration = 59 } = {}) {
     } else {
       console.log("Upload successful!"); // Log
       setStatus("success");
-      // Reset after a short delay to show success message
+      // MODIFIÉ: Passer à l'état de fondu après un délai
+      const displaySuccessDuration = 2700; // Temps d'affichage du message avant fondu (3000ms total - 300ms de fondu)
       setTimeout(() => {
-        // Vérifier si le statut est toujours 'success' avant de reset (au cas où l'utilisateur aurait cliqué reset entre temps)
-        if (status === "success") {
-          resetRecording();
-        }
-      }, 3000);
+        // On vérifie si on est TOUJOURS en succès avant de déclencher le fondu
+        // (l'utilisateur pourrait avoir cliqué "reset" entre temps)
+        setStatus((currentStatus) =>
+          currentStatus === "success" ? "success-fading" : currentStatus
+        );
+      }, displaySuccessDuration);
     }
   };
 
@@ -266,11 +291,18 @@ export function useRecorder({ duration = 59 } = {}) {
         mediaRecorderRef.current &&
         mediaRecorderRef.current.state === "recording"
       ) {
-        mediaRecorderRef.current.stop();
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (e) {
+          console.warn("Error stopping recorder during cleanup:", e);
+        }
       }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
+      // Réinitialiser les refs au cas où
+      mediaRecorderRef.current = null;
+      streamRef.current = null;
     };
   }, []); // Exécuté seulement au démontage
 
@@ -281,7 +313,7 @@ export function useRecorder({ duration = 59 } = {}) {
     error,
     startRecording,
     stopRecording,
-    resetRecording,
+    resetRecording, // On garde resetRecording exporté au cas où
     sendAudio,
     setError,
   };

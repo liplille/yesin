@@ -6,13 +6,13 @@ import {
   PaperAirplaneIcon,
   ArrowPathIcon,
   CheckCircleIcon,
-  ArrowPathIcon as SpinnerIcon,
+  ArrowPathIcon as SpinnerIcon, // Renommé pour éviter conflit
 } from "@heroicons/react/24/solid"; // Import des icônes
 import { Link } from "react-router-dom";
 import Toast from "./Toast";
-import { SoundWaveBars } from "../pages/CreatePitchPage";
+import { SoundWaveBars } from "../pages/CreatePitchPage"; // Assurez-vous que le chemin est correct
 import { useRecorder } from "../hooks/useRecorder";
-import { requestAudioFocus, onAudioFocus } from "../utils/audioFocus";
+import { requestAudioFocus, onAudioFocus } from "../utils/audioFocus"; // Assurez-vous que le chemin est correct
 
 export function DemoRecorder() {
   const {
@@ -25,14 +25,15 @@ export function DemoRecorder() {
     resetRecording,
     sendAudio,
     setError,
-  } = useRecorder();
+  } = useRecorder(); // Durée par défaut de 59s est gérée dans le hook
 
+  // Utiliser useCallback pour stabiliser la fonction stopRecording passée en dépendance de useEffect
   const memoizedStopRecording = useCallback(() => {
     stopRecording();
   }, [stopRecording]);
 
   const handleSend = () => {
-    sendAudio("demopitches");
+    sendAudio("demopitches"); // Bucket 'demopitches'
   };
 
   // Notifier la playlist de recharger quand un upload termine
@@ -56,11 +57,12 @@ export function DemoRecorder() {
   // Si on perd le focus (un autre acteur prend la main), on stop l'enregistrement en cours
   useEffect(() => {
     return onAudioFocus("recorder", () => {
+      // Vérifier si on est toujours en train d'enregistrer avant d'arrêter
       if (status === "recording") {
         memoizedStopRecording();
       }
     });
-  }, [status, memoizedStopRecording]);
+  }, [status, memoizedStopRecording]); // Ajouter memoizedStopRecording aux dépendances
 
   // Gestionnaire d'erreur pour l'élément audio
   const handleAudioError = useCallback(
@@ -90,12 +92,15 @@ export function DemoRecorder() {
               mediaError.message || `Erreur audio (code ${mediaError.code}).`;
         }
       }
-      setError(errorMessage);
+      setError(errorMessage); // Met à jour l'état d'erreur géré par le hook
     },
-    [setError]
+    [setError] // Dépendance à setError du hook
   );
 
   const isRequestingPermission = status === "requesting";
+  const isUploading = status === "uploading";
+  const isSuccess = status === "success";
+  const isSuccessFading = status === "success-fading"; // Variable pour le nouvel état
 
   return (
     <div className="rounded-2xl border border-black/10 bg-white/5 p-4 sm:p-5 shadow-lg dark:border-white/10 flex flex-col h-full">
@@ -104,7 +109,8 @@ export function DemoRecorder() {
       </h4>
 
       <div className="flex-grow flex flex-col justify-center items-center min-h-[160px]">
-        {(status === "idle" || status === "requesting") && (
+        {/* --- État Initial ou Demande Permission --- */}
+        {(status === "idle" || isRequestingPermission) && (
           <div className="flex flex-col items-center justify-center gap-4 w-full">
             <SoundWaveBars isActive={false} dimWhenIdle={true} />
             <div className="flex flex-col items-center gap-2">
@@ -129,11 +135,12 @@ export function DemoRecorder() {
           </div>
         )}
 
+        {/* --- État Enregistrement --- */}
         {status === "recording" && !isRequestingPermission && (
           <div className="flex flex-col items-center gap-4 w-full">
             <SoundWaveBars isActive={true} />
             <button
-              onClick={stopRecording}
+              onClick={stopRecording} // Utilise la fonction stable
               className="btn rounded-full bg-red-600 px-4 py-2 font-medium text-white transition hover:opacity-90"
             >
               <StopCircleIcon className="h-5 w-5 inline-block mr-2 align-text-bottom" />
@@ -145,6 +152,7 @@ export function DemoRecorder() {
           </div>
         )}
 
+        {/* --- État Enregistré (Blob prêt) --- */}
         {status === "recorded" && audioBlob && (
           <div className="flex flex-col items-center gap-4 w-full px-0 sm:px-2">
             <audio
@@ -155,7 +163,7 @@ export function DemoRecorder() {
             />
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full">
               <button
-                onClick={resetRecording}
+                onClick={resetRecording} // Utilise la fonction stable
                 className="inline-flex items-center justify-center gap-2 text-sm underline opacity-80 hover:opacity-100"
               >
                 <ArrowPathIcon className="h-5 w-5" />
@@ -172,13 +180,18 @@ export function DemoRecorder() {
           </div>
         )}
 
-        {(status === "uploading" || status === "success") && (
+        {/* --- États Uploading, Success, Success-Fading --- */}
+        {(isUploading || isSuccess || isSuccessFading) && (
           <div className="flex flex-col items-center justify-center gap-4 text-center">
-            {status === "uploading" && (
-              <p className="animate-pulse">Envoi en cours...</p>
-            )}
-            {status === "success" && (
-              <div className="text-green-500 flex items-center gap-2">
+            {isUploading && <p className="animate-pulse">Envoi en cours...</p>}
+            {/* MODIFIÉ: Condition pour afficher pendant success ET success-fading */}
+            {(isSuccess || isSuccessFading) && (
+              // MODIFIÉ: Ajout des classes de transition et gestion de l'opacité
+              <div
+                className={`text-green-500 flex items-center gap-2 transition-opacity duration-300 ease-out ${
+                  isSuccessFading ? "opacity-0" : "opacity-100" // Change l'opacité pour le fondu
+                }`}
+              >
                 <CheckCircleIcon className="h-6 w-6" />
                 <span>Enregistrement envoyé avec succès !</span>
               </div>
@@ -196,6 +209,7 @@ export function DemoRecorder() {
         .
       </p>
 
+      {/* Le composant Toast gère l'affichage basé sur la prop 'message' */}
       <Toast message={error} onClose={() => setError(null)} />
     </div>
   );

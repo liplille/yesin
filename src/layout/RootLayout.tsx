@@ -11,6 +11,7 @@ import qrWhatsapp from "../assets/images/whatsapp-qr-code.png";
 import { useSupabaseAuthListener } from "../hooks/useSupabaseAuthListener";
 import GeoAddress from "../components/GeoAddress";
 import { useGeoAddress } from "../hooks/useGeoAddress";
+// Les imports de type ne sont pas nécessaires ici
 
 export type RootOutletContext = {
   session: ReturnType<typeof useSupabaseAuthListener>["session"];
@@ -24,7 +25,6 @@ export default function RootLayout() {
   const { status, error, address, locate, reset } = useGeoAddress({
     autoLocateOnMount: true,
   });
-  // Derivés pour rester compatibles avec le composant GeoAddress + Outlet
   const city = address?.city ?? null;
   const label = address?.line ?? "";
   const message = error?.message ?? "";
@@ -34,35 +34,48 @@ export default function RootLayout() {
     navigate("/");
   };
 
+  // === CORRECTION ICI ===
   const handleGeoToggle = () => {
-    if (status === "success") reset();
-    else locate();
+    // Si la géolocalisation est active ('success'), on la désactive (reset)
+    if (status === "success") {
+      reset();
+    }
+    // Sinon (idle, error, locating, loading), on tente de (re)lancer la localisation
+    else if (status === "idle" || status === "error") {
+      // On ne reset pas en cas d'erreur avant de relancer,
+      // pour potentiellement garder le message d'erreur visible si locate() échoue à nouveau
+      locate();
+    }
+    // Si status est 'loading' ou 'locating', un clic supplémentaire ne fait rien
+    // Si error.code est 'unsupported', le bouton est désactivé
   };
 
-  // ... (getGeoIconColor, getGeoTooltip, isLoading check restent identiques) ...
-  const geoIconClassByStatus: Record<string, string> = {
-    success: "text-green-500",
-    loading: "text-yellow-500 animate-pulse",
-    denied: "text-red-500",
-    error: "text-red-500",
-    idle: "text-gray-400",
-    prompt: "text-gray-400",
-    unsupported: "text-gray-400",
+  const getGeoIconColor = () => {
+    if (status === "success") return "text-green-500";
+    if (status === "loading" || status === "locating")
+      return "text-yellow-500 animate-pulse";
+    if (status === "error") return "text-red-500";
+    return "text-gray-400";
   };
-  const getGeoIconColor = () => geoIconClassByStatus[status] ?? "text-gray-400";
 
-  const tooltipByStatus: Record<string, string> = {
-    success: "Désactiver la géolocalisation pour cette session",
-    loading: "Géolocalisation en cours...",
-    denied:
-      "Géolocalisation bloquée. Modifiez les paramètres du site dans votre navigateur pour l'autoriser.",
-    error: "Erreur de géolocalisation. Cliquez pour réessayer.",
-    idle: "Activer la géolocalisation",
-    prompt: "Activer la géolocalisation",
-    unsupported: "Géolocalisation non supportée",
+  const getGeoTooltip = () => {
+    // === CORRECTION ICI ===
+    // Adapter le tooltip pour indiquer la désactivation
+    if (status === "success")
+      return "Désactiver la géolocalisation pour cette session";
+    if (status === "loading" || status === "locating")
+      return "Géolocalisation en cours...";
+    if (status === "error") {
+      if (error?.code === "unsupported") {
+        return "Géolocalisation non supportée par votre navigateur.";
+      }
+      if (error?.code === "denied") {
+        return "Géolocalisation bloquée. Cliquez pour réessayer (vérifiez les permissions).";
+      }
+      return `Erreur: ${message}. Cliquez pour réessayer.`;
+    }
+    return "Activer la géolocalisation"; // idle
   };
-  const getGeoTooltip = () =>
-    tooltipByStatus[status] ?? "Activer la géolocalisation";
 
   if (isLoading) {
     return <div className="p-6">Chargement de la session…</div>;
@@ -70,9 +83,7 @@ export default function RootLayout() {
 
   return (
     <div className="min-h-screen bg-bg text-fg">
-      {/* ... (Header reste identique) ... */}
       <header className="sticky top-0 z-30 border-b border-black/10 bg-bg/70 backdrop-blur dark:border-white/10">
-        {/* Padding ajusté */}
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-4">
           <NavLink to="/" className="flex items-center gap-2">
             <TextLogo />
@@ -82,8 +93,11 @@ export default function RootLayout() {
             <button
               onClick={handleGeoToggle}
               title={getGeoTooltip()}
+              aria-label={getGeoTooltip()}
+              // aria-pressed indique si la fonctionnalité (géoloc) est active
               aria-pressed={status === "success"}
               className="rounded-full p-1.5 hover:bg-black/10 dark:hover:bg-white/10"
+              disabled={error?.code === "unsupported"}
             >
               <MapPinIcon className={`h-6 w-6 ${getGeoIconColor()}`} />
             </button>
@@ -105,14 +119,17 @@ export default function RootLayout() {
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6">
         <Outlet
-          context={{ session, geoCity: city } satisfies RootOutletContext}
+          context={
+            {
+              session,
+              geoCity: city,
+            } satisfies RootOutletContext
+          }
         />
       </main>
 
       <footer className="border-t border-black/10 dark:border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 sm:px-6 py-8 text-xs sm:text-sm opacity-80 md:flex-row md:gap-4">
-          {/* Section Gauche: Copyright + Adresse */}
-          {/* === MODIFICATION ICI === Ajout de min-w-0 */}
           <div className="flex flex-col items-center gap-2 text-center md:items-start md:text-left min-w-0">
             <div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1 md:justify-start">
               <span>© {new Date().getFullYear()}</span>
@@ -121,20 +138,18 @@ export default function RootLayout() {
               </span>
               <span>Pour un web plus humain. Fait à Lille. 🌱</span>
             </div>
-            {/* GeoAddress est maintenant limité en largeur grâce à ses classes internes max-w-* */}
+            {/* Passer locate comme onRefresh pour le bouton 'Mettre à jour' du footer */}
             <GeoAddress
               status={status}
               label={label}
               message={message}
-              onLocate={locate}
-              onRefresh={locate}
+              onLocate={locate} // Bouton principal 'Activer/Réessayer'
+              onRefresh={locate} // Bouton 'Mettre à jour' (si succès) appelle aussi locate
+              error={error}
             />
           </div>
 
-          {/* Section Droite: Contact WhatsApp */}
-          {/* === MODIFICATION ICI === Ajout de flex-shrink-0 */}
           <div className="flex items-center flex-shrink-0">
-            {/* Utilisation de l'option 1 suggérée précédemment pour la clarté */}
             <div className="hidden md:flex md:items-center md:gap-3">
               <div className="flex flex-col text-xs text-right">
                 <span className="font-semibold">Une question ?</span>
@@ -143,11 +158,13 @@ export default function RootLayout() {
               <img
                 src={qrWhatsapp}
                 alt="QR WhatsApp"
-                className="h-12 w-12 rounded bg-white p-1 flex-shrink-0" // flex-shrink-0 sur le QR code
+                className="h-12 w-12 rounded bg-white p-1 flex-shrink-0"
               />
             </div>
             <a
               href="https://wa.me/3366668573"
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-lg bg-green-500 px-3 py-1.5 text-xs text-white md:hidden"
             >
               Contact WhatsApp

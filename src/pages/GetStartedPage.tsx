@@ -561,22 +561,16 @@ export default function App() {
 
       <section id="cta" className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/30 via-primary/10 to-transparent" />
-        {/* Retiré px-6 */}
         <div className="mx-auto max-w-5xl py-20 text-center px-4">
-          {" "}
-          {/* Ajout px-4 */}
-          {cityDisplay ? (
-            <h3 className="text-3xl font-extrabold md:text-4xl">
-              {`Prêt à faire entendre votre histoire à ${cityDisplay} ?`}
-            </h3>
-          ) : (
-            <div className="space-y-2">
-              <h3 className="text-3xl font-extrabold md:text-4xl">
-                Prêt à faire entendre votre histoire ?
-              </h3>
-              <p className="text-xl">🎙️ Faites-vous entendre</p>
-            </div>
-          )}
+          {/* === MODIFICATION ICI === */}
+          {/* Titre principal, avec la ville ajoutée si disponible */}
+          <h3 className="text-3xl font-extrabold md:text-4xl">
+            Prêt à faire entendre votre histoire
+            {cityDisplay ? ` à ${cityDisplay}` : ""} ?
+          </h3>
+          {/* Le sous-titre redondant a été supprimé */}
+
+          {/* Paragraphe descriptif conservé */}
           <p className="mt-2 opacity-85">
             Votre voix a de la valeur. Il est temps de la faire entendre.
           </p>
