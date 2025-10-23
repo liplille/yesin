@@ -1,14 +1,14 @@
 // src/components/DemoRecorder.tsx
+import React, { useEffect, useCallback } from "react"; // Import React séparément
 import {
   MicrophoneIcon,
   StopCircleIcon,
   PaperAirplaneIcon,
   ArrowPathIcon,
   CheckCircleIcon,
-  ArrowPathIcon as SpinnerIcon, // Icône utilisée comme spinner
-} from "@heroicons/react/24/solid";
+  ArrowPathIcon as SpinnerIcon,
+} from "@heroicons/react/24/solid"; // Import des icônes
 import { Link } from "react-router-dom";
-import { useEffect, useCallback } from "react";
 import Toast from "./Toast";
 import { SoundWaveBars } from "../pages/CreatePitchPage";
 import { useRecorder } from "../hooks/useRecorder";
@@ -61,6 +61,39 @@ export function DemoRecorder() {
       }
     });
   }, [status, memoizedStopRecording]);
+
+  // Gestionnaire d'erreur pour l'élément audio
+  const handleAudioError = useCallback(
+    (event: React.SyntheticEvent<HTMLAudioElement, Event>) => {
+      const audioEl = event.currentTarget;
+      const mediaError = audioEl.error;
+      let errorMessage = "Erreur de lecture audio inconnue.";
+
+      if (mediaError) {
+        console.error("Audio playback error details:", mediaError);
+        switch (mediaError.code) {
+          case mediaError.MEDIA_ERR_ABORTED:
+            errorMessage = "Lecture audio annulée.";
+            break;
+          case mediaError.MEDIA_ERR_NETWORK:
+            errorMessage = "Erreur réseau lors du chargement audio.";
+            break;
+          case mediaError.MEDIA_ERR_DECODE:
+            errorMessage =
+              "Erreur de décodage audio (fichier corrompu ou format non supporté).";
+            break;
+          case mediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            errorMessage = "Format audio non supporté par votre navigateur.";
+            break;
+          default:
+            errorMessage =
+              mediaError.message || `Erreur audio (code ${mediaError.code}).`;
+        }
+      }
+      setError(errorMessage);
+    },
+    [setError]
+  );
 
   const isRequestingPermission = status === "requesting";
 
@@ -118,6 +151,7 @@ export function DemoRecorder() {
               src={URL.createObjectURL(audioBlob)}
               controls
               className="w-full mb-4"
+              onError={handleAudioError} // Gestionnaire d'erreur ajouté ici
             />
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full">
               <button

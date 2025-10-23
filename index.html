@@ -5,12 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>YesIn.media — Votre voix est votre meilleure publicité</title>
 
+    <meta
+      name="description"
+      content="YesIn.media : Faites découvrir votre projet localement grâce à des pitchs audio authentiques. Enregistrez votre voix, partagez votre histoire."
+    />
+
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="manifest" href="/site.webmanifest" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    {/* Ajout pour compatibilité */}
     <meta name="theme-color" content="#5B5BD9" />
     <meta name="msapplication-TileColor" content="#5B5BD9" />
+
+    <link rel="modulepreload" href="/src/main.tsx" />
+
+    <meta
+      property="og:title"
+      content="YesIn.media — Votre voix est votre meilleure publicité"
+    />
+    <meta
+      property="og:description"
+      content="YesIn.media : Faites découvrir votre projet localement grâce à des pitchs audio authentiques. Enregistrez votre voix, partagez votre histoire."
+    />
+    <meta property="og:image" content="https://yesin.media/og-image.png" />
+    <meta property="og:url" content="https://yesin.media" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="YesIn.media — Votre voix est votre meilleure publicité"
+    />
+    <meta
+      name="twitter:description"
+      content="YesIn.media : Faites découvrir votre projet localement grâce à des pitchs audio authentiques. Enregistrez votre voix, partagez votre histoire."
+    />
+    <meta name="twitter:image" content="https://yesin.media/og-image.png" />
+    {/* Utilise la même image ou une dédiée */}
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "YesIn.media",
+        "url": "https://yesin.media",
+        "description": "Faites découvrir votre projet localement grâce à des pitchs audio authentiques."
+      }
+    </script>
   </head>
   <body class="bg-[--color-bg] text-[--color-fg] antialiased">
     <div id="root"></div>
