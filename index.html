@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>YesIn.media — Votre voix est votre meilleure publicité</title>
 
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_MEASUREMENT_ID%"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      // Configurez avec l'ID de mesure de votre variable d'environnement
+      gtag("config", "%VITE_GA_MEASUREMENT_ID%");
+    </script>
+
     <meta
       name="description"
       content="YesIn.media : Faites découvrir votre projet localement grâce à des pitchs audio authentiques. Enregistrez votre voix, partagez votre histoire."
