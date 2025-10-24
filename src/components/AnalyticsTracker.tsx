@@ -49,11 +49,10 @@ export default function AnalyticsTracker() {
     }
 
     if (isWelcome && hasSbSession) {
-      // Priming: on mémorise le chemin actuel mais on force __lastMetaPVTime très ancien
-      // pour que la prochaine navigation (ex: /create-pitch) déclenche bien un PageView Meta.
+      // On "prétend" que le PV a déjà été tiré à cet URL
       window.__lastMetaPVPath = metaPath;
-      window.__lastMetaPVTime = 0; // permet de tracer immédiatement à la prochaine route
-      return; // ⛔ rien d'envoyé sur /welcome
+      window.__lastMetaPVTime = Date.now();
+      return; // ⛔ ni GA ni Meta ne doivent tracer /welcome
     }
 
     // --- 2) GA : OK à chaque nav SPA (sauf cas bloqués ci-dessus) ---
