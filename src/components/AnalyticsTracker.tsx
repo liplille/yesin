@@ -1,5 +1,5 @@
 // src/components/AnalyticsTracker.tsx
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 declare global {
@@ -10,32 +10,31 @@ declare global {
       params?: Record<string, any>
     ) => void;
     fbq?: (...args: any[]) => void;
-    __lastMetaPVPath?: string; // petit mémo global
+    __lastMetaPVPath?: string; // mémorise le dernier chemin pour Meta
   }
 }
 
 export default function AnalyticsTracker() {
   const location = useLocation();
-  const hasMountedRef = useRef(false); // pour ignorer le 1er rendu
 
   useEffect(() => {
     const path = location.pathname + location.search + location.hash;
 
-    // GA: pageview SPA (OK de le garder)
+    // ✅ Google Analytics : OK de tirer à chaque navigation SPA
     if (typeof window.gtag === "function") {
       window.gtag("event", "page_view", { page_path: path });
     }
 
-    // META Pixel: éviter les doublons
+    // ✅ Meta Pixel : éviter les doublons automatiques
     if (typeof window.fbq === "function") {
-      // Ignorer le 1er rendu (le snippet global dans index.html a déjà fait le PageView)
-      if (!hasMountedRef.current) {
-        hasMountedRef.current = true;
+      // Si c'est le tout premier rendu, on ne fait rien → le snippet index.html a déjà tiré le PageView
+      if (!window.__lastMetaPVPath) {
         window.__lastMetaPVPath = path;
+        console.log(`Meta Pixel initial path registered: ${path}`);
         return;
       }
 
-      // Tirer uniquement si le chemin a changé depuis la dernière fois
+      // Si on change d'URL → tirer un PageView SPA (sans doublon)
       if (window.__lastMetaPVPath !== path) {
         window.fbq("track", "PageView");
         window.__lastMetaPVPath = path;
