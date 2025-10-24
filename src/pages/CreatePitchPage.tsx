@@ -11,6 +11,12 @@ import {
   ArrowPathIcon,
 } from "@heroicons/react/24/solid";
 
+declare global {
+  interface Window {
+    fbq?: (...args: any[]) => void;
+  }
+}
+
 /**
  * Visualizer à barres qui s'adapte à la largeur de son conteneur.
  */
@@ -191,7 +197,23 @@ export default function CreatePitchPage() {
     return () => clearInterval(interval);
   }, [isRecording]);
 
+  // CONVERSION 2 — Validation email (arrivée sur create-pitch)
+  useEffect(() => {
+    if (
+      window.fbq &&
+      !sessionStorage.getItem("conv2:completeRegistration:fired")
+    ) {
+      window.fbq("track", "CompleteRegistration");
+      sessionStorage.setItem("conv2:completeRegistration:fired", "1");
+    }
+  }, []);
+
   const handleStartRecording = async () => {
+    // CONVERSION 3 — Début enregistrement (clic)
+    if (window.fbq && !sessionStorage.getItem("conv3:startTrial:fired")) {
+      window.fbq("track", "StartTrial");
+      sessionStorage.setItem("conv3:startTrial:fired", "1");
+    }
     setError(null);
     setAudioBlob(null);
     setCountdown(59);

@@ -1,12 +1,33 @@
 // src/pages/ThankYouPage.tsx
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { CheckCircleIcon, EnvelopeIcon } from "@heroicons/react/24/outline"; // Importe les icônes
+
+declare global {
+  interface Window {
+    fbq?: (...args: any[]) => void;
+  }
+}
 
 type ThankYouPageProps = {
   variant: "check-email" | "submitted";
 };
 
 export default function ThankYouPage({ variant }: ThankYouPageProps) {
+  useEffect(() => {
+    if (!window.fbq) return;
+    const key =
+      variant === "check-email" ? "conv1:lead:fired" : "conv4:submitted:fired";
+
+    if (!sessionStorage.getItem(key)) {
+      if (variant === "check-email") {
+        window.fbq("track", "Lead"); // CONVERSION 1
+      } else if (variant === "submitted") {
+        window.fbq("track", "SubmitApplication", { content_category: "pitch" }); // CONVERSION 4
+      }
+      sessionStorage.setItem(key, "1");
+    }
+  }, [variant]);
   return (
     // Augmente le padding vertical global
     <div className="py-24 sm:py-32 text-center">
