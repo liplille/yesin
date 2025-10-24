@@ -19,25 +19,23 @@ export default function AnalyticsTracker() {
   const hasMountedRef = useRef(false); // pour ignorer le 1er rendu
 
   useEffect(() => {
+    const path = location.pathname + location.search + location.hash;
+
     // GA: pageview SPA (OK de le garder)
     if (typeof window.gtag === "function") {
-      window.gtag("event", "page_view", {
-        page_path: location.pathname + location.search + location.hash,
-      });
+      window.gtag("event", "page_view", { page_path: path });
     }
 
     // META Pixel: éviter les doublons
     if (typeof window.fbq === "function") {
-      const path = location.pathname + location.search + location.hash;
-
-      // Ignorer le 1er rendu (le snippet dans index.html a déjà fait le PageView)
+      // Ignorer le 1er rendu (le snippet global dans index.html a déjà fait le PageView)
       if (!hasMountedRef.current) {
         hasMountedRef.current = true;
-        window.__lastMetaPVPath = path; // mémorise le chemin courant
+        window.__lastMetaPVPath = path;
         return;
       }
 
-      // Ne tirer que si le chemin a réellement changé et n'a pas déjà été tiré
+      // Tirer uniquement si le chemin a changé depuis la dernière fois
       if (window.__lastMetaPVPath !== path) {
         window.fbq("track", "PageView");
         window.__lastMetaPVPath = path;
