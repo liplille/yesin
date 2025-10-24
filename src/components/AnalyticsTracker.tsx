@@ -7,64 +7,42 @@ declare global {
     gtag?: (cmd: string, action: string, params?: Record<string, any>) => void;
     fbq?: (...args: any[]) => void;
     __lastMetaPVPath?: string;
-    __lastMetaPVTime?: number;
   }
 }
 
-function hasSupabaseSession(): boolean {
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i) || "";
-      if (
-        k.startsWith("sb-") &&
-        k.endsWith("-auth-token") &&
-        localStorage.getItem(k)
-      ) {
-        return true;
-      }
-    }
-  } catch {}
-  return false;
-}
-
+/**
+ * - GA : tire un page_view à chaque navigation SPA
+ * - Meta : ignore /auth/callback, ignore le hash, et ne tire pas au 1er rendu (déjà fait via index.html)
+ */
 export default function AnalyticsTracker() {
   const location = useLocation();
 
   useEffect(() => {
+    // GA : on inclut le hash
     const gaPath = location.pathname + location.search + location.hash;
+
+    // Meta : on ignore le hash
     const metaPath = location.pathname + location.search;
-    const loggedIn = hasSupabaseSession();
 
-    // 0) Pages jamais tracées par Meta/GA
-    if (metaPath.startsWith("/auth/callback")) return;
-
-    // 1) Ne JAMAIS tracer /welcome
-    if (metaPath === "/welcome") return;
-
-    // 2) Si user connecté, on ne trace pas la home "/" (tu ne veux voir que /create-pitch)
-    if (metaPath === "/" && loggedIn) return;
-
-    // 3) GA — OK pour ce qui reste
+    // ---- Google Analytics ----
     window.gtag?.("event", "page_view", { page_path: gaPath });
 
-    // 4) Meta Pixel — anti-doublon + antirebond
-    if (window.fbq) {
-      const now = Date.now();
+    // ---- Meta Pixel ----
+    if (!window.fbq) return;
 
-      if (!window.__lastMetaPVPath) {
-        window.__lastMetaPVPath = metaPath;
-        window.__lastMetaPVTime = now;
-        return;
-      }
+    // Ne pas tracer /auth/callback
+    if (metaPath.startsWith("/auth/callback")) return;
 
-      const pathChanged = window.__lastMetaPVPath !== metaPath;
-      const tooSoon = now - (window.__lastMetaPVTime || 0) < 800;
+    // Premier rendu : on ne tire pas (déjà tiré par index.html)
+    if (!window.__lastMetaPVPath) {
+      window.__lastMetaPVPath = metaPath;
+      return;
+    }
 
-      if (pathChanged && !tooSoon) {
-        window.fbq("track", "PageView");
-        window.__lastMetaPVPath = metaPath;
-        window.__lastMetaPVTime = now;
-      }
+    // Navigation réelle → tirer un PageView
+    if (window.__lastMetaPVPath !== metaPath) {
+      window.fbq("track", "PageView");
+      window.__lastMetaPVPath = metaPath;
     }
   }, [location]);
 
