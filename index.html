@@ -15,10 +15,10 @@
         dataLayer.push(arguments);
       }
       gtag("js", new Date());
-
       gtag("config", "%VITE_GA_MEASUREMENT_ID%");
     </script>
 
+    <!-- Meta Pixel (head) -->
     <script>
       !(function (f, b, e, v, n, t, s) {
         if (f.fbq) return;
@@ -51,13 +51,7 @@
         fbq("track", "PageView");
       }
     </script>
-    <noscript
-      ><img
-        height="1"
-        width="1"
-        style="display: none"
-        src="https://www.facebook.com/tr?id=784685721039545&ev=PageView&noscript=1"
-    /></noscript>
+    <!-- ⛔️ Pas de <noscript> avec <img> dans le <head> -->
 
     <meta
       name="description"
@@ -107,12 +101,17 @@
     </script>
   </head>
   <body class="bg-[--color-bg] text-[--color-fg] antialiased">
+    <!-- ✅ Le noscript Pixel doit être dans le body -->
     <noscript>
       <img
         height="1"
         width="1"
+        style="display: none"
         src="https://www.facebook.com/tr?id=784685721039545&ev=PageView&noscript=1"
-    /></noscript>
+        alt=""
+      />
+    </noscript>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
