@@ -10,7 +10,7 @@ declare global {
       params?: Record<string, any>
     ) => void;
     fbq?: (...args: any[]) => void;
-    __lastMetaPVPath?: string; // mémorise le dernier chemin pour Meta
+    __lastMetaPVPath?: string; // mémorise le dernier chemin (sans hash) pour Meta
   }
 }
 
@@ -18,27 +18,31 @@ export default function AnalyticsTracker() {
   const location = useLocation();
 
   useEffect(() => {
-    const path = location.pathname + location.search + location.hash;
+    // GA : on peut garder le hash (plus précis côté reporting)
+    const gaPath = location.pathname + location.search + location.hash;
 
-    // ✅ Google Analytics : OK de tirer à chaque navigation SPA
+    // META : on ignore le hash pour éviter les doublons /create-pitch -> /create-pitch#
+    const metaPath = location.pathname + location.search;
+
+    // ---- Google Analytics ----
     if (typeof window.gtag === "function") {
-      window.gtag("event", "page_view", { page_path: path });
+      window.gtag("event", "page_view", { page_path: gaPath });
     }
 
-    // ✅ Meta Pixel : éviter les doublons automatiques
+    // ---- Meta Pixel ----
     if (typeof window.fbq === "function") {
-      // Si c'est le tout premier rendu, on ne fait rien → le snippet index.html a déjà tiré le PageView
+      // 1er rendu : NE PAS tirer (le snippet index.html a déjà envoyé 1 PageView)
       if (!window.__lastMetaPVPath) {
-        window.__lastMetaPVPath = path;
-        console.log(`Meta Pixel initial path registered: ${path}`);
+        window.__lastMetaPVPath = metaPath;
+        // console.log(`[Meta] initial path registered: ${metaPath}`);
         return;
       }
 
-      // Si on change d'URL → tirer un PageView SPA (sans doublon)
-      if (window.__lastMetaPVPath !== path) {
+      // Changement réel de page (en ignorant le hash) -> tirer un PageView
+      if (window.__lastMetaPVPath !== metaPath) {
         window.fbq("track", "PageView");
-        window.__lastMetaPVPath = path;
-        console.log(`Meta Pixel PageView (SPA nav): ${path}`);
+        window.__lastMetaPVPath = metaPath;
+        // console.log(`[Meta] PageView (SPA nav): ${metaPath}`);
       }
     } else {
       console.warn("Meta Pixel (fbq) is not available.");
