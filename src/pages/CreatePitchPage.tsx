@@ -209,11 +209,6 @@ export default function CreatePitchPage() {
   }, []);
 
   const handleStartRecording = async () => {
-    // CONVERSION 3 — Début enregistrement (clic)
-    if (window.fbq && !sessionStorage.getItem("conv3:startTrial:fired")) {
-      window.fbq("track", "StartTrial");
-      sessionStorage.setItem("conv3:startTrial:fired", "1");
-    }
     setError(null);
     setAudioBlob(null);
     setCountdown(59);
@@ -230,6 +225,11 @@ export default function CreatePitchPage() {
       };
       mediaRecorderRef.current = recorder;
       recorder.start();
+      // CONVERSION 3 — Début enregistrement (clic)
+      if (window.fbq && !sessionStorage.getItem("conv3:startTrial:fired")) {
+        window.fbq("track", "StartTrial");
+        sessionStorage.setItem("conv3:startTrial:fired", "1");
+      }
       setStatusMessage("Enregistrement en cours...");
       setIsRecording(true);
     } catch (err) {
