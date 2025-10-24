@@ -46,7 +46,9 @@
       );
       fbq("init", "784685721039545");
       fbq("disablePushState");
-      fbq("track", "PageView");
+      if (!location.pathname.startsWith("/auth/callback")) {
+        fbq("track", "PageView");
+      }
     </script>
 
     <meta
