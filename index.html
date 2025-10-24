@@ -46,10 +46,6 @@
 
       fbq("init", "784685721039545");
       fbq("disablePushState");
-
-      if (!location.pathname.startsWith("/auth/callback")) {
-        fbq("track", "PageView");
-      }
     </script>
     <!-- ⛔️ Pas de <noscript> avec <img> dans le <head> -->
 

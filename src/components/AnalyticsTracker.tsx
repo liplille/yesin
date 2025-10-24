@@ -1,60 +1,57 @@
 // src/components/AnalyticsTracker.tsx
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { useAuth } from "../auth/AuthProvider"; // Garder l'import
+import { useAuth } from "../auth/AuthProvider";
 
 declare global {
   interface Window {
     gtag?: (cmd: string, action: string, params?: Record<string, any>) => void;
     fbq?: (...args: any[]) => void;
-    __lastMetaPVPath?: string;
+    // __lastMetaPVPath n'est plus nécessaire ici
   }
 }
 
 export default function AnalyticsTracker() {
   const location = useLocation();
-  const { session, loading } = useAuth(); // <-- Récupérer aussi 'loading'
+  const { session, loading } = useAuth(); // On utilise toujours session et loading
 
   useEffect(() => {
-    // --- NOUVELLE CONDITION ---
-    // Attendre que l'état d'authentification soit chargé avant de faire quoi que ce soit
+    // 1. Attendre que l'état d'authentification soit chargé
     if (loading) {
-      return; // Ne rien faire si l'état auth est en cours de détermination
+      return; // Ne rien faire tant que l'état auth n'est pas finalisé
     }
-    // --- FIN NOUVELLE CONDITION ---
 
-    // GA : on inclut le hash
+    // 2. Préparer les chemins
     const gaPath = location.pathname + location.search + location.hash;
-    window.gtag?.("event", "page_view", { page_path: gaPath });
+    const metaPath = location.pathname + location.search; // On ignore le hash pour Meta
 
-    // Meta : on ignore le hash
-    const metaPath = location.pathname + location.search;
+    // 3. Google Analytics (exclure /auth/callback si souhaité)
+    if (!metaPath.startsWith("/auth/callback")) {
+      window.gtag?.("event", "page_view", { page_path: gaPath });
+    }
 
-    // ---- Meta Pixel ----
+    // 4. Meta Pixel Logic (maintenant gère aussi l'initial)
     if (!window.fbq) return;
-    if (metaPath.startsWith("/auth/callback")) return;
+    if (metaPath.startsWith("/auth/callback")) return; // Exclure le callback
 
-    // Premier rendu : on ne tire pas (déjà tiré par index.html)
-    if (!window.__lastMetaPVPath) {
-      window.__lastMetaPVPath = metaPath;
-      return;
+    // 5. Déterminer si on doit skipper le PageView pour Meta
+    const isHomePage = metaPath === "/";
+    // Utiliser startsWith pour /welcome au cas où il y aurait des paramètres
+    const isWelcomePage = metaPath.startsWith("/welcome");
+    const shouldSkipMetaPageView = session && (isHomePage || isWelcomePage);
+
+    // 6. Envoyer le PageView à Meta si on ne doit PAS le skipper
+    if (!shouldSkipMetaPageView) {
+      window.fbq("track", "PageView");
+      console.log(`AnalyticsTracker: Meta PageView envoyé pour ${metaPath}`); // Pour débogage
+    } else {
+      console.log(
+        `AnalyticsTracker: Meta PageView SKIPPÉ pour ${metaPath} (connecté)`
+      ); // Pour débogage
     }
 
-    // Navigation réelle → tirer un PageView, sauf exceptions
-    if (window.__lastMetaPVPath !== metaPath) {
-      const isHomePage = metaPath === "/";
-      const isWelcomePage = metaPath === "/welcome";
-      // Skip tracking / or /welcome if user is logged in (maintenant que loading est false)
-      const shouldSkipMetaPageView = session && (isHomePage || isWelcomePage);
-
-      if (!shouldSkipMetaPageView) {
-        window.fbq("track", "PageView");
-      }
-
-      window.__lastMetaPVPath = metaPath;
-    }
-    // Ajouter 'loading' aux dépendances pour ré-exécuter quand il passe à false
-  }, [location, session, loading]); // <-- Ajouter 'loading' ici
+    // Ce hook s'exécute à chaque changement de location OU quand loading passe à false
+  }, [location, session, loading]);
 
   return null;
 }
