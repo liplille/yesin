@@ -22,30 +22,24 @@ export default function AuthCallback() {
 
   useEffect(() => {
     (async () => {
-      // 1) Mémorise l'URL complète d'origine (avec hash) pour l'échange Supabase
       const originalHref = window.location.href;
 
-      // 2) Nettoie tout de suite l'URL visible (supprime le hash) pour éviter un second PageView
+      // Nettoyage visuel de l'URL (enlève le hash)
       const cleanPath = window.location.pathname + window.location.search;
       if (window.location.hash) {
         try {
           history.replaceState(null, "", cleanPath);
-        } catch {
-          // noop
-        }
+        } catch {}
       }
-
-      // 3) Synchronise le "mémo" Meta pour empêcher tout PageView supplémentaire côté tracker
-      window.__lastMetaPVPath = cleanPath;
+      window.__lastMetaPVPath = cleanPath; // évite PV en double
 
       try {
-        // 4) Échange la session avec l'URL ORIGINALE (qui contient le hash/tokens)
         await supabase.auth.exchangeCodeForSession(originalHref);
-      } catch (err) {
-        console.error("[AuthCallback] exchangeCodeForSession error:", err);
-        // on continue quoi qu'il arrive vers la cible
+        // 👉 Flag pour CreatePitch : on vient bien d’un lien magique
+        sessionStorage.setItem("cameFromMagic", "1");
+      } catch (e) {
+        console.error("[AuthCallback] exchangeCodeForSession", e);
       } finally {
-        // 5) Redirige proprement vers la page finale
         const params = new URLSearchParams(location.search);
         const next = params.get("next") || "/";
         navigate(next, { replace: true });
@@ -53,6 +47,5 @@ export default function AuthCallback() {
     })();
   }, [location.search, navigate]);
 
-  // Peut afficher un mini loader si tu veux
   return null;
 }

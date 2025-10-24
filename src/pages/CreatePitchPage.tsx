@@ -197,14 +197,16 @@ export default function CreatePitchPage() {
     return () => clearInterval(interval);
   }, [isRecording]);
 
-  // CONVERSION 2 — Validation email (arrivée sur create-pitch)
+  // ✅ CONVERSION 2 — uniquement si on vient du mail
   useEffect(() => {
-    if (
-      window.fbq &&
-      !sessionStorage.getItem("conv2:completeRegistration:fired")
-    ) {
+    const fromMagic = sessionStorage.getItem("cameFromMagic") === "1";
+    const alreadyFired =
+      sessionStorage.getItem("conv2:completeRegistration:fired") === "1";
+
+    if (fromMagic && !alreadyFired && window.fbq) {
       window.fbq("track", "CompleteRegistration");
       sessionStorage.setItem("conv2:completeRegistration:fired", "1");
+      sessionStorage.removeItem("cameFromMagic"); // on consomme le flag
     }
   }, []);
 
