@@ -1,7 +1,7 @@
 // src/components/AnalyticsTracker.tsx
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { useAuth } from "../auth/AuthProvider"; // <-- 1. Importer useAuth
+import { useAuth } from "../auth/AuthProvider"; // Garder l'import
 
 declare global {
   interface Window {
@@ -11,55 +11,50 @@ declare global {
   }
 }
 
-/**
- * - GA : tire un page_view à chaque navigation SPA
- * - Meta : ignore /auth/callback, ignore le hash, ne tire pas au 1er rendu (déjà fait via index.html),
- * ET ignore / et /welcome si l'utilisateur est connecté.
- */
 export default function AnalyticsTracker() {
   const location = useLocation();
-  const { session } = useAuth(); // <-- Récupérer la session
+  const { session, loading } = useAuth(); // <-- Récupérer aussi 'loading'
 
   useEffect(() => {
+    // --- NOUVELLE CONDITION ---
+    // Attendre que l'état d'authentification soit chargé avant de faire quoi que ce soit
+    if (loading) {
+      return; // Ne rien faire si l'état auth est en cours de détermination
+    }
+    // --- FIN NOUVELLE CONDITION ---
+
     // GA : on inclut le hash
     const gaPath = location.pathname + location.search + location.hash;
+    window.gtag?.("event", "page_view", { page_path: gaPath });
 
     // Meta : on ignore le hash
     const metaPath = location.pathname + location.search;
 
-    // ---- Google Analytics ----
-    window.gtag?.("event", "page_view", { page_path: gaPath }); //
-
     // ---- Meta Pixel ----
-    if (!window.fbq) return; //
-
-    // Ne pas tracer /auth/callback
-    if (metaPath.startsWith("/auth/callback")) return; //
+    if (!window.fbq) return;
+    if (metaPath.startsWith("/auth/callback")) return;
 
     // Premier rendu : on ne tire pas (déjà tiré par index.html)
     if (!window.__lastMetaPVPath) {
-      //
-      window.__lastMetaPVPath = metaPath; //
-      return; //
+      window.__lastMetaPVPath = metaPath;
+      return;
     }
 
     // Navigation réelle → tirer un PageView, sauf exceptions
     if (window.__lastMetaPVPath !== metaPath) {
-      //
-      // --- NOUVELLE CONDITION ---
-      // Ne pas tracker / et /welcome si l'utilisateur est connecté
       const isHomePage = metaPath === "/";
       const isWelcomePage = metaPath === "/welcome";
+      // Skip tracking / or /welcome if user is logged in (maintenant que loading est false)
       const shouldSkipMetaPageView = session && (isHomePage || isWelcomePage);
 
       if (!shouldSkipMetaPageView) {
-        window.fbq("track", "PageView"); //
+        window.fbq("track", "PageView");
       }
-      // --- FIN NOUVELLE CONDITION ---
 
-      window.__lastMetaPVPath = metaPath; //
+      window.__lastMetaPVPath = metaPath;
     }
-  }, [location, session]); // <-- Ajouter session aux dépendances
+    // Ajouter 'loading' aux dépendances pour ré-exécuter quand il passe à false
+  }, [location, session, loading]); // <-- Ajouter 'loading' ici
 
   return null;
 }
