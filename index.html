@@ -44,11 +44,41 @@
         "script",
         "https://connect.facebook.net/en_US/fbevents.js"
       );
+
       fbq("init", "784685721039545");
-      fbq("disablePushState");
-      if (!location.pathname.startsWith("/auth/callback")) {
-        fbq("track", "PageView");
-      }
+      fbq("disablePushState"); // empêche l’auto-PageView SPA de Meta
+
+      // --- Conditions pour éviter le PV sur /auth/callback et /welcome si déjà loggé ---
+      (function () {
+        var path = location.pathname;
+        var isAuthCallback = path.startsWith("/auth/callback");
+        var isWelcome = path === "/welcome";
+
+        // Détection très rapide d'une session Supabase (v2) dans localStorage
+        var hasSbSession = false;
+        try {
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i) || "";
+            if (
+              k.startsWith("sb-") &&
+              k.endsWith("-auth-token") &&
+              localStorage.getItem(k)
+            ) {
+              hasSbSession = true;
+              break;
+            }
+          }
+        } catch (e) {
+          /* ignore */
+        }
+
+        // 👉 Ne PAS tirer de PageView si:
+        // - on est sur /auth/callback (on ignore toujours)
+        // - on est sur /welcome ET l'utilisateur a déjà une session (il sera redirigé)
+        if (!isAuthCallback && !(isWelcome && hasSbSession)) {
+          fbq("track", "PageView");
+        }
+      })();
     </script>
 
     <meta
