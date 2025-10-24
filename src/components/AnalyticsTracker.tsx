@@ -1,5 +1,5 @@
 // src/components/AnalyticsTracker.tsx
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 
@@ -7,50 +7,74 @@ declare global {
   interface Window {
     gtag?: (cmd: string, action: string, params?: Record<string, any>) => void;
     fbq?: (...args: any[]) => void;
-    // __lastMetaPVPath n'est plus nécessaire ici
+    __lastMetaPVPath?: string;
+    __lastMetaPVTime?: number;
   }
 }
 
 export default function AnalyticsTracker() {
   const location = useLocation();
-  const { session, loading } = useAuth(); // On utilise toujours session et loading
+  const { session, loading } = useAuth();
+  const didSendInitialRef = useRef(false); // pour GA si besoin
 
   useEffect(() => {
-    // 1. Attendre que l'état d'authentification soit chargé
-    if (loading) {
-      return; // Ne rien faire tant que l'état auth n'est pas finalisé
-    }
+    // 1) Attendre l'état auth (évite des PV pendant la bascule)
+    if (loading) return;
 
-    // 2. Préparer les chemins
+    // 2) Préparer chemins
     const gaPath = location.pathname + location.search + location.hash;
-    const metaPath = location.pathname + location.search; // On ignore le hash pour Meta
+    const metaPath = location.pathname + location.search; // hash ignoré pour Meta
 
-    // 3. Google Analytics (exclure /auth/callback si souhaité)
-    if (!metaPath.startsWith("/auth/callback")) {
-      window.gtag?.("event", "page_view", { page_path: gaPath });
+    // 3) Pages à ignorer totalement
+    if (metaPath.startsWith("/auth/callback")) return;
+
+    // 4) Règles d'exclusion conditionnelles
+    const isWelcome =
+      metaPath === "/welcome" || metaPath.startsWith("/welcome?");
+    const isHome = metaPath === "/";
+    const loggedIn = !!session;
+
+    // — Meta : skip PV si connecté et sur /welcome ou /
+    const skipMeta = loggedIn && (isWelcome || isHome);
+
+    // — GA : faire pareil si tu veux un miroir exact
+    const skipGA =
+      (loggedIn && (isWelcome || isHome)) ||
+      metaPath.startsWith("/auth/callback");
+
+    // 5) Google Analytics
+    if (!skipGA && typeof window.gtag === "function") {
+      // Anti-doublon basique : évite d'envoyer 2x d'affilée le même path dans un même tick
+      if (!didSendInitialRef.current || didSendInitialRef.current !== true) {
+        window.gtag("event", "page_view", { page_path: gaPath });
+        didSendInitialRef.current = true;
+      } else {
+        // on renvoie quand même sur vrai changement d'URL
+        window.gtag("event", "page_view", { page_path: gaPath });
+      }
     }
 
-    // 4. Meta Pixel Logic (maintenant gère aussi l'initial)
-    if (!window.fbq) return;
-    if (metaPath.startsWith("/auth/callback")) return; // Exclure le callback
+    // 6) Meta Pixel (avec antidoublon & antirebond)
+    if (!skipMeta && typeof window.fbq === "function") {
+      const now = Date.now();
 
-    // 5. Déterminer si on doit skipper le PageView pour Meta
-    const isHomePage = metaPath === "/";
-    // Utiliser startsWith pour /welcome au cas où il y aurait des paramètres
-    const isWelcomePage = metaPath.startsWith("/welcome");
-    const shouldSkipMetaPageView = session && (isHomePage || isWelcomePage);
+      // init mémoire si absent
+      if (!window.__lastMetaPVPath) {
+        window.__lastMetaPVPath = metaPath;
+        window.__lastMetaPVTime = now;
+        window.fbq("track", "PageView");
+        return;
+      }
 
-    // 6. Envoyer le PageView à Meta si on ne doit PAS le skipper
-    if (!shouldSkipMetaPageView) {
-      window.fbq("track", "PageView");
-      console.log(`AnalyticsTracker: Meta PageView envoyé pour ${metaPath}`); // Pour débogage
-    } else {
-      console.log(
-        `AnalyticsTracker: Meta PageView SKIPPÉ pour ${metaPath} (connecté)`
-      ); // Pour débogage
+      const pathChanged = window.__lastMetaPVPath !== metaPath;
+      const tooSoon = now - (window.__lastMetaPVTime || 0) < 800; // antirebond doux
+
+      if (pathChanged && !tooSoon) {
+        window.fbq("track", "PageView");
+        window.__lastMetaPVPath = metaPath;
+        window.__lastMetaPVTime = now;
+      }
     }
-
-    // Ce hook s'exécute à chaque changement de location OU quand loading passe à false
   }, [location, session, loading]);
 
   return null;
