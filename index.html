@@ -53,8 +53,8 @@
         var path = location.pathname;
         var isAuthCallback = path.startsWith("/auth/callback");
         var isWelcome = path === "/welcome";
+        var isHome = path === "/";
 
-        // Détection très rapide d'une session Supabase (v2) dans localStorage
         var hasSbSession = false;
         try {
           for (var i = 0; i < localStorage.length; i++) {
@@ -68,14 +68,12 @@
               break;
             }
           }
-        } catch (e) {
-          /* ignore */
-        }
+        } catch (e) {}
 
-        // 👉 Ne PAS tirer de PageView si:
-        // - on est sur /auth/callback (on ignore toujours)
-        // - on est sur /welcome ET l'utilisateur a déjà une session (il sera redirigé)
-        if (!isAuthCallback && !(isWelcome && hasSbSession)) {
+        // ❌ jamais de PV initial sur /auth/callback
+        // ❌ jamais de PV initial sur /welcome
+        // ❌ pas de PV initial sur "/" si déjà connecté
+        if (!isAuthCallback && !isWelcome && !(isHome && hasSbSession)) {
           fbq("track", "PageView");
         }
       })();
