@@ -306,10 +306,11 @@ export default function CreatePitchPage() {
       </div>
 
       <h1 className="text-3xl font-extrabold sm:text-4xl mb-2">
-        Le micro est à vous.
+        Votre micro est prêt ! 🎤 Enregistrez votre publicité audio gratuite.{" "}
       </h1>
       <p className="mb-8 text-base sm:text-lg opacity-80">
-        Racontez votre histoire en 59 secondes.
+        Partagez l'histoire et la passion de votre projet avec la communauté. A
+        vous de marquer les esprits !
       </p>
 
       <div className="rounded-2xl border border-black/10 bg-white/5 p-4 sm:p-6 shadow-2xl dark:border-white/10">
