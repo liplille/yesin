@@ -1,21 +1,33 @@
 // src/pages/CreatePitchPage.tsx
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import Toast from "../components/Toast";
 import {
-  MicrophoneIcon,
   StopCircleIcon,
   PlayCircleIcon,
   PaperAirplaneIcon,
   ArrowPathIcon,
+  MapPinIcon,
 } from "@heroicons/react/24/solid";
+import type { RootOutletContext } from "../layout/RootLayout";
 
 declare global {
   interface Window {
     fbq?: (...args: any[]) => void;
   }
 }
+
+// Correction : Définir correctement les props pour SoundWaveBars
+type SoundWaveBarsProps = {
+  color?: string;
+  barWidth?: number;
+  gap?: number;
+  speedMin?: number;
+  speedMax?: number;
+  dimWhenIdle?: boolean;
+  isActive?: boolean;
+};
 
 /**
  * Visualizer à barres qui s'adapte à la largeur de son conteneur.
@@ -28,41 +40,29 @@ export function SoundWaveBars({
   speedMax = 0.7,
   dimWhenIdle = false,
   isActive = true,
-}: {
-  color?: string;
-  barWidth?: number;
-  gap?: number;
-  speedMin?: number;
-  speedMax?: number;
-  dimWhenIdle?: boolean;
-  isActive?: boolean;
-}) {
+}: SoundWaveBarsProps) {
+  // <- Utiliser le type de props défini
   const containerRef = useRef<HTMLDivElement>(null);
   const [barCount, setBarCount] = useState(0);
 
-  // Recalculer le nombre de barres quand la taille du conteneur change
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
     const resizeObserver = new ResizeObserver(() => {
       const containerWidth = container.clientWidth;
       const fullBarWidth = barWidth + gap * 2;
       const newCount = Math.floor(containerWidth / fullBarWidth);
       setBarCount(newCount);
     });
-
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
   }, [barWidth, gap]);
 
   const bars = useMemo(() => Array.from({ length: barCount }), [barCount]);
 
-  // Appliquer les délais d'animation aléatoires
   useEffect(() => {
     const root = containerRef.current;
     if (!root || barCount === 0) return;
-
     const nodes = root.querySelectorAll<HTMLDivElement>(".swb__bar");
     nodes.forEach((el, idx) => {
       const dur = Math.random() * (speedMax - speedMin) + speedMin;
@@ -98,67 +98,19 @@ export function SoundWaveBars({
           <div className="swb__bar" key={i} />
         ))}
       </div>
-
       <style>{`
-        .swb {
-          display: grid;
-          place-items: center;
-          width: 100%;
-          min-height: 90px;
-          overflow: hidden;
-        }
+        /* ... (styles pour SoundWaveBars inchangés) ... */
+        .swb { display: grid; place-items: center; width: 100%; min-height: 90px; overflow: hidden; }
         .swb.is-idle { opacity: 0.6; }
-        .swb__wave {
-          height: 70px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: none;
-          user-select: none;
-          will-change: transform;
-        }
-        .swb__bar {
-          background: var(--swb-color, #f32968);
-          width: var(--swb-bar-w, 1px);
-          margin: 0 var(--swb-gap, 1.5px);
-          height: 10px;
-          animation-name: swb-wave-lg;
-          animation-iteration-count: infinite;
-          animation-timing-function: ease-in-out;
-          animation-direction: alternate;
-          flex-shrink: 0;
-        }
-        .swb__bar:nth-child(-n+15),
-        .swb__bar:nth-last-child(-n+15) {
-          animation-name: swb-wave-md;
-        }
-        .swb__bar:nth-child(-n+5),
-        .swb__bar:nth-last-child(-n+5) {
-          animation-name: swb-wave-sm;
-        }
-        .swb:not(.is-active) .swb__bar {
-          animation-play-state: paused;
-        }
-
-        @keyframes swb-wave-sm {
-          0%   { opacity: .35; height: 10px; }
-          100% { opacity: 1;   height: 25px; }
-        }
-        @keyframes swb-wave-md {
-          0%   { opacity: .35; height: 15px; }
-          100% { opacity: 1;   height: 50px; }
-        }
-        @keyframes swb-wave-lg {
-          0%   { opacity: .35; height: 15px; }
-          100% { opacity: 1;   height: 70px; }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .swb__bar {
-            animation-duration: .001s !important;
-            animation-iteration-count: 1 !important;
-          }
-        }
+        .swb__wave { height: 70px; display: flex; align-items: center; justify-content: center; pointer-events: none; user-select: none; will-change: transform; }
+        .swb__bar { background: var(--swb-color, #f32968); width: var(--swb-bar-w, 1px); margin: 0 var(--swb-gap, 1.5px); height: 10px; animation-name: swb-wave-lg; animation-iteration-count: infinite; animation-timing-function: ease-in-out; animation-direction: alternate; flex-shrink: 0; }
+        .swb__bar:nth-child(-n+15), .swb__bar:nth-last-child(-n+15) { animation-name: swb-wave-md; }
+        .swb__bar:nth-child(-n+5), .swb__bar:nth-last-child(-n+5) { animation-name: swb-wave-sm; }
+        .swb:not(.is-active) .swb__bar { animation-play-state: paused; }
+        @keyframes swb-wave-sm { 0% { opacity: .35; height: 10px; } 100% { opacity: 1; height: 25px; } }
+        @keyframes swb-wave-md { 0% { opacity: .35; height: 15px; } 100% { opacity: 1; height: 50px; } }
+        @keyframes swb-wave-lg { 0% { opacity: .35; height: 15px; } 100% { opacity: 1; height: 70px; } }
+        @media (prefers-reduced-motion: reduce) { .swb__bar { animation-duration: .001s !important; animation-iteration-count: 1 !important; } }
       `}</style>
     </div>
   );
@@ -169,10 +121,14 @@ export default function CreatePitchPage() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [countdown, setCountdown] = useState(59);
   const [error, setError] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState("Préparez votre voix...");
+  // Correction : Suppression de statusMessage et setStatusMessage
+  // const [statusMessage, setStatusMessage] = useState("Préparez votre voix...");
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [isSending, setIsSending] = useState(false);
   const navigate = useNavigate();
+
+  const { geoCoords, geoLocate } = useOutletContext<RootOutletContext>();
 
   useEffect(() => {
     (async () => {
@@ -195,9 +151,9 @@ export default function CreatePitchPage() {
       }, 1000);
     }
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRecording]);
 
-  // ✅ CONVERSION 2 — uniquement si on vient du mail
   useEffect(() => {
     const fromMagic = sessionStorage.getItem("cameFromMagic") === "1";
     const alreadyFired =
@@ -206,7 +162,7 @@ export default function CreatePitchPage() {
     if (fromMagic && !alreadyFired && window.fbq) {
       window.fbq("track", "CompleteRegistration");
       sessionStorage.setItem("conv2:completeRegistration:fired", "1");
-      sessionStorage.removeItem("cameFromMagic"); // on consomme le flag
+      sessionStorage.removeItem("cameFromMagic");
     }
   }, []);
 
@@ -214,46 +170,95 @@ export default function CreatePitchPage() {
     setError(null);
     setAudioBlob(null);
     setCountdown(59);
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMediaStream(stream);
-      const recorder = new MediaRecorder(stream);
+
+      let options = { mimeType: "audio/webm;codecs=opus" };
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options = { mimeType: "audio/webm" };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: "audio/mp4" };
+          if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            options = { mimeType: "audio/wav" };
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+              throw new Error("Aucun format d'enregistrement audio supporté.");
+            }
+          }
+        }
+      }
+
+      const recorder = new MediaRecorder(stream, options);
       const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
       recorder.onstop = () => {
-        setAudioBlob(new Blob(chunks, { type: "audio/m4a" }));
+        if (chunks.length > 0) {
+          const recordedBlob = new Blob(chunks, { type: options.mimeType });
+          setAudioBlob(recordedBlob);
+        } else {
+          setError("L'enregistrement n'a produit aucune donnée audio.");
+        }
         stream.getTracks().forEach((t) => t.stop());
+        setMediaStream(null);
+        // Correction : Retrait de setStatusMessage
+        // setStatusMessage("Écoutez votre pitch avant de l'envoyer.");
+      };
+      recorder.onerror = (event) => {
+        console.error("Erreur MediaRecorder:", event);
+        // @ts-ignore
+        const errorEvent = event as Event & { error?: DOMException };
+        setError(
+          `Erreur d'enregistrement: ${errorEvent.error?.name || "inconnue"}`
+        );
+        setIsRecording(false);
+        if (stream) stream.getTracks().forEach((t) => t.stop());
         setMediaStream(null);
       };
       mediaRecorderRef.current = recorder;
       recorder.start();
-      // CONVERSION 3 — Début enregistrement (clic)
+
       if (window.fbq && !sessionStorage.getItem("conv3:startTrial:fired")) {
         window.fbq("track", "StartTrial");
         sessionStorage.setItem("conv3:startTrial:fired", "1");
       }
-      setStatusMessage("Enregistrement en cours...");
+      // Correction : Retrait de setStatusMessage
+      // setStatusMessage("Enregistrement en cours...");
       setIsRecording(true);
-    } catch (err) {
-      console.error("Erreur d'accès au micro:", err);
-      setError(
-        "L'accès au micro est nécessaire. Veuillez l'autoriser dans les paramètres de votre navigateur."
-      );
+    } catch (err: any) {
+      let errMsg = "Impossible de démarrer l'enregistrement.";
+      if (
+        err.name === "NotAllowedError" ||
+        err.name === "PermissionDeniedError"
+      ) {
+        errMsg = "L'accès au micro est nécessaire. Veuillez l'autoriser.";
+      } else if (
+        err.name === "NotFoundError" ||
+        err.name === "DevicesNotFoundError"
+      ) {
+        errMsg = "Aucun microphone trouvé.";
+      } else if (err.message) {
+        errMsg = err.message;
+      }
+      setError(errMsg);
       setIsRecording(false);
+      if (mediaStream) mediaStream.getTracks().forEach((t) => t.stop());
       setMediaStream(null);
     }
   };
 
   const handleStopRecording = () => {
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state === "recording"
-    ) {
+    if (mediaRecorderRef.current?.state === "recording") {
       mediaRecorderRef.current.stop();
+    } else {
+      if (mediaStream) mediaStream.getTracks().forEach((t) => t.stop());
+      setMediaStream(null);
     }
     setIsRecording(false);
-    setCountdown(59);
-    setStatusMessage("Écoutez votre pitch avant de l'envoyer.");
+    // Correction : Retrait de setStatusMessage
+    // setStatusMessage("Écoutez votre pitch avant de l'envoyer.");
   };
 
   const handleSendPitch = async () => {
@@ -261,51 +266,92 @@ export default function CreatePitchPage() {
       setError("Aucun pitch enregistré à envoyer.");
       return;
     }
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
     if (!user) {
       setError("Veuillez vous reconnecter pour envoyer votre pitch.");
       return;
     }
 
-    const fileName = `pitch-${user.id}-${Date.now()}.m4a`;
-    const { error: uploadError } = await supabase.storage
-      .from("pitches")
-      .upload(fileName, audioBlob);
+    setIsSending(true);
+    setError(null);
 
-    if (uploadError) {
-      setError(uploadError.message);
-    } else {
+    const mimeType = audioBlob.type;
+    let extension = "bin";
+    if (mimeType.includes("webm")) extension = "webm";
+    else if (mimeType.includes("mp4") || mimeType.includes("aac"))
+      extension = "m4a";
+    else if (mimeType.includes("wav")) extension = "wav";
+    else if (mimeType.includes("ogg")) extension = "ogg";
+
+    const fileName = `pitch-${user.id}-${Date.now()}.${extension}`;
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from("pitches")
+        .upload(fileName, audioBlob, { contentType: mimeType });
+      if (uploadError) throw uploadError;
+
+      const { error: insertError } = await supabase
+        .from("pitches_metadata")
+        .insert({
+          pitch_file_name: fileName,
+          user_id: user.id,
+          latitude: geoCoords?.lat ?? null,
+          longitude: geoCoords?.lon ?? null,
+        });
+      if (insertError) throw insertError;
+
       sessionStorage.setItem("audioSubmitted", "true");
       navigate("/thank-you/submitted", {
         replace: true,
         state: { audioSubmitted: true },
       });
+    } catch (err: any) {
+      console.error("Erreur lors de l'envoi:", err);
+      setError(
+        `Erreur d'envoi: ${err?.message || "Une erreur inconnue est survenue."}`
+      );
+    } finally {
+      setIsSending(false);
     }
   };
 
   const handleReset = () => {
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
-    ) {
-      mediaRecorderRef.current.stop();
+    if (mediaRecorderRef.current) {
+      if (mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.onstop = null;
+        mediaRecorderRef.current.onerror = null;
+        if (mediaRecorderRef.current.state === "recording") {
+          mediaRecorderRef.current.stop();
+        }
+      }
     }
-    if (mediaStream) {
-      mediaStream.getTracks().forEach((track) => track.stop());
-    }
+    if (mediaStream) mediaStream.getTracks().forEach((track) => track.stop());
     setAudioBlob(null);
     setCountdown(59);
-    setStatusMessage("Préparez votre voix...");
+    // Correction : Retrait de setStatusMessage
+    // setStatusMessage("Préparez votre voix...");
     setIsRecording(false);
     setMediaStream(null);
+    mediaRecorderRef.current = null;
+    setIsSending(false);
+    setError(null);
   };
+
+  const geoStatusDisplay = useMemo(() => {
+    if (geoCoords) {
+      return `Position prête`;
+    }
+    return "Localisation non active";
+  }, [geoCoords]);
+
+  const isSendButtonDisabled = isSending;
 
   return (
     <div className="mx-auto max-w-2xl py-12 text-center sm:py-16">
-      <div className="sr-only" aria-live="polite" role="status">
-        {statusMessage}
-      </div>
+      {/* Correction : Retrait du sr-only statusMessage */}
+      {/* <div className="sr-only" aria-live="polite" role="status">{statusMessage}</div> */}
 
       <h1 className="text-3xl font-extrabold sm:text-4xl mb-2">
         Votre micro est prêt ! 🎤 Enregistrez votre publicité audio gratuite.{" "}
@@ -318,7 +364,8 @@ export default function CreatePitchPage() {
       <div className="rounded-2xl border border-black/10 bg-white/5 p-4 sm:p-6 shadow-2xl dark:border-white/10">
         {!isRecording && !audioBlob && (
           <div className="flex flex-col items-center gap-4">
-            <MicrophoneIcon className="h-16 w-16 text-primary opacity-50" />
+            {/* Correction : Passer les props correctement */}
+            <SoundWaveBars isActive={false} dimWhenIdle={true} />
             <button
               onClick={handleStartRecording}
               className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 font-bold text-white text-base sm:px-6 sm:py-3 sm:text-lg hover:opacity-90 transition-transform hover:scale-105"
@@ -332,7 +379,8 @@ export default function CreatePitchPage() {
 
         {isRecording && (
           <div className="flex flex-col items-center gap-6 sm:gap-8">
-            <SoundWaveBars isActive={isRecording} dimWhenIdle />
+            {/* Correction : Passer la prop correctement */}
+            <SoundWaveBars isActive={isRecording} />
             <button
               onClick={handleStopRecording}
               className="inline-flex items-center gap-2 rounded-full bg-red-500 px-5 py-2.5 font-bold text-white text-base sm:px-6 sm:py-3 sm:text-lg hover:opacity-90 transition-transform hover:scale-105"
@@ -354,22 +402,53 @@ export default function CreatePitchPage() {
               controls
               className="w-full"
             />
+            <div className="mt-2 text-sm opacity-70 flex items-center justify-center gap-1">
+              <MapPinIcon
+                className={`h-4 w-4 ${
+                  geoCoords ? "text-green-500" : "text-gray-400"
+                }`}
+              />
+              <span>{geoStatusDisplay}</span>
+              {!geoCoords && geoLocate && (
+                <button
+                  onClick={geoLocate}
+                  className="ml-2 underline text-xs text-blue-500 hover:text-blue-700"
+                  disabled={isSending}
+                >
+                  (Activer)
+                </button>
+              )}
+            </div>
+
             <div className="mt-4 flex w-full flex-col-reverse sm:flex-row justify-center gap-3 sm:gap-4">
               <button
                 onClick={handleReset}
-                className="inline-flex items-center justify-center gap-2 text-sm underline opacity-80 hover:opacity-100"
+                className="inline-flex items-center justify-center gap-2 text-sm underline opacity-80 hover:opacity-100 disabled:opacity-50"
+                disabled={isSending}
               >
                 <ArrowPathIcon className="h-5 w-5" />
                 Recommencer
               </button>
               <button
                 onClick={handleSendPitch}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 font-bold text-white text-base sm:px-6 sm:py-3 sm:text-lg hover:opacity-90 transition-transform hover:scale-105"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 font-bold text-white text-base sm:px-6 sm:py-3 sm:text-lg hover:opacity-90 transition-transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed"
+                disabled={isSendButtonDisabled}
+                // title={!geoCoords ? "Veuillez activer la localisation pour envoyer" : undefined}
               >
-                <PaperAirplaneIcon className="h-5 w-5" />
-                Envoyer mon pitch
+                {isSending ? (
+                  <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                ) : (
+                  <PaperAirplaneIcon className="h-5 w-5" />
+                )}
+                {isSending ? "Envoi en cours..." : "Envoyer mon pitch"}
               </button>
             </div>
+            {!geoCoords && !isSending && (
+              <p className="text-xs opacity-60 mt-2">
+                (La localisation n'est pas active, le pitch sera envoyé sans
+                position géographique)
+              </p>
+            )}
           </div>
         )}
       </div>

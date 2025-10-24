@@ -10,9 +10,10 @@ import {
 } from "@heroicons/react/24/solid"; // Import des icônes
 import { Link } from "react-router-dom";
 import Toast from "./Toast";
-import { SoundWaveBars } from "../pages/CreatePitchPage"; // Assurez-vous que le chemin est correct
+// Correction : Importer SoundWaveBars depuis CreatePitchPage où il est défini
+import { SoundWaveBars } from "../pages/CreatePitchPage";
 import { useRecorder } from "../hooks/useRecorder";
-import { requestAudioFocus, onAudioFocus } from "../utils/audioFocus"; // Assurez-vous que le chemin est correct
+import { requestAudioFocus, onAudioFocus } from "../utils/audioFocus";
 
 export function DemoRecorder() {
   const {
@@ -112,6 +113,7 @@ export function DemoRecorder() {
         {/* --- État Initial ou Demande Permission --- */}
         {(status === "idle" || isRequestingPermission) && (
           <div className="flex flex-col items-center justify-center gap-4 w-full">
+            {/* Correction : Passer les props correctement */}
             <SoundWaveBars isActive={false} dimWhenIdle={true} />
             <div className="flex flex-col items-center gap-2">
               <button
@@ -138,9 +140,10 @@ export function DemoRecorder() {
         {/* --- État Enregistrement --- */}
         {status === "recording" && !isRequestingPermission && (
           <div className="flex flex-col items-center gap-4 w-full">
+            {/* Correction : Passer la prop correctement */}
             <SoundWaveBars isActive={true} />
             <button
-              onClick={stopRecording} // Utilise la fonction stable
+              onClick={memoizedStopRecording} // Utilise la fonction stable
               className="btn rounded-full bg-red-600 px-4 py-2 font-medium text-white transition hover:opacity-90"
             >
               <StopCircleIcon className="h-5 w-5 inline-block mr-2 align-text-bottom" />
@@ -184,12 +187,10 @@ export function DemoRecorder() {
         {(isUploading || isSuccess || isSuccessFading) && (
           <div className="flex flex-col items-center justify-center gap-4 text-center">
             {isUploading && <p className="animate-pulse">Envoi en cours...</p>}
-            {/* MODIFIÉ: Condition pour afficher pendant success ET success-fading */}
             {(isSuccess || isSuccessFading) && (
-              // MODIFIÉ: Ajout des classes de transition et gestion de l'opacité
               <div
                 className={`text-green-500 flex items-center gap-2 transition-opacity duration-300 ease-out ${
-                  isSuccessFading ? "opacity-0" : "opacity-100" // Change l'opacité pour le fondu
+                  isSuccessFading ? "opacity-0" : "opacity-100"
                 }`}
               >
                 <CheckCircleIcon className="h-6 w-6" />
@@ -209,7 +210,6 @@ export function DemoRecorder() {
         .
       </p>
 
-      {/* Le composant Toast gère l'affichage basé sur la prop 'message' */}
       <Toast message={error} onClose={() => setError(null)} />
     </div>
   );

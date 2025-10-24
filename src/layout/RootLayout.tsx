@@ -11,18 +11,23 @@ import qrWhatsapp from "../assets/images/whatsapp-qr-code.png";
 import { useSupabaseAuthListener } from "../hooks/useSupabaseAuthListener";
 import GeoAddress from "../components/GeoAddress";
 import { useGeoAddress } from "../hooks/useGeoAddress";
-// Les imports de type ne sont pas nécessaires ici
+// Retrait de l'import Session inutilisé
+// import type { Session } from "@supabase/supabase-js";
 
+// Type pour le contexte de l'outlet
 export type RootOutletContext = {
   session: ReturnType<typeof useSupabaseAuthListener>["session"];
   geoCity: string | null;
+  geoCoords: { lat: number; lon: number } | null;
+  geoLocate: () => void; // Ajout de la fonction locate
 };
 
 export default function RootLayout() {
   const { session, isLoading } = useSupabaseAuthListener();
   const navigate = useNavigate();
 
-  const { status, error, address, locate, reset } = useGeoAddress({
+  // coords est bien utilisé maintenant dans le contexte
+  const { status, error, address, coords, locate, reset } = useGeoAddress({
     autoLocateOnMount: true,
   });
   const city = address?.city ?? null;
@@ -34,20 +39,13 @@ export default function RootLayout() {
     navigate("/");
   };
 
-  // === CORRECTION ICI ===
   const handleGeoToggle = () => {
-    // Si la géolocalisation est active ('success'), on la désactive (reset)
     if (status === "success") {
       reset();
-    }
-    // Sinon (idle, error, locating, loading), on tente de (re)lancer la localisation
-    else if (status === "idle" || status === "error") {
-      // On ne reset pas en cas d'erreur avant de relancer,
-      // pour potentiellement garder le message d'erreur visible si locate() échoue à nouveau
+    } else if (status === "idle" || status === "error") {
       locate();
     }
-    // Si status est 'loading' ou 'locating', un clic supplémentaire ne fait rien
-    // Si error.code est 'unsupported', le bouton est désactivé
+    // Ne fait rien si 'loading' ou 'locating'
   };
 
   const getGeoIconColor = () => {
@@ -59,8 +57,6 @@ export default function RootLayout() {
   };
 
   const getGeoTooltip = () => {
-    // === CORRECTION ICI ===
-    // Adapter le tooltip pour indiquer la désactivation
     if (status === "success")
       return "Désactiver la géolocalisation pour cette session";
     if (status === "loading" || status === "locating")
@@ -94,7 +90,6 @@ export default function RootLayout() {
               onClick={handleGeoToggle}
               title={getGeoTooltip()}
               aria-label={getGeoTooltip()}
-              // aria-pressed indique si la fonctionnalité (géoloc) est active
               aria-pressed={status === "success"}
               className="rounded-full p-1.5 hover:bg-black/10 dark:hover:bg-white/10"
               disabled={error?.code === "unsupported"}
@@ -123,6 +118,8 @@ export default function RootLayout() {
             {
               session,
               geoCity: city,
+              geoCoords: coords, // Passer les coords
+              geoLocate: locate, // Passer la fonction locate
             } satisfies RootOutletContext
           }
         />
@@ -138,7 +135,7 @@ export default function RootLayout() {
               </span>
               <span>Pour un web plus humain. Fait à Lille. 🌱</span>
             </div>
-            {/* Passer locate comme onRefresh pour le bouton 'Mettre à jour' du footer */}
+            {/* Passer locate comme onRefresh et onLocate ici */}
             <GeoAddress
               status={status}
               label={label}
@@ -162,7 +159,7 @@ export default function RootLayout() {
               />
             </div>
             <a
-              href="https://wa.me/3366668573"
+              href="https://wa.me/3366668573" // Assurez-vous que c'est le bon numéro
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-lg bg-green-500 px-3 py-1.5 text-xs text-white md:hidden"
