@@ -10,6 +10,7 @@ import OopsPage from "./pages/OopsPage";
 import WelcomePage from "./pages/WelcomePage";
 import CreatePitchPage from "./pages/CreatePitchPage";
 import ThankYouPage from "./pages/ThankYouPage"; // page unifiée (variant)
+import AuthCallback from "./pages/AuthCallback";
 
 const router = createBrowserRouter([
   {
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
           </RouteGate>
         ),
       },
+      { path: "/auth/callback", element: <AuthCallback /> },
 
       // Page d’erreur dédiée (optionnelle : on garde /oops si tu veux un lien direct)
       {
