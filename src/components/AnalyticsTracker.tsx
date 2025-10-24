@@ -22,16 +22,50 @@ export default function AnalyticsTracker() {
     const gaPath = location.pathname + location.search + location.hash;
     const metaPath = location.pathname + location.search;
 
-    // GA : OK à chaque nav SPA
-    window.gtag?.("event", "page_view", { page_path: gaPath });
-
-    // ❌ Ne jamais tirer de PageView Meta sur /auth/callback
+    // --- 0) IGNORER COMPLETEMENT /auth/callback (aucun PageView Meta/GA) ---
     if (metaPath.startsWith("/auth/callback")) return;
 
-    if (window.fbq) {
+    // --- 1) Si on est sur /welcome ET qu'une session Supabase existe déjà,
+    //        alors on NE TRACE PAS cette page (ni GA ni Meta).
+    //        On prépare en plus le mémo pour que la prochaine route (ex: /create-pitch)
+    //        puisse tracer immédiatement un PageView.
+    const isWelcome = metaPath === "/welcome";
+
+    let hasSbSession = false;
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i) || "";
+        if (
+          k.startsWith("sb-") &&
+          k.endsWith("-auth-token") &&
+          localStorage.getItem(k)
+        ) {
+          hasSbSession = true;
+          break;
+        }
+      }
+    } catch {
+      /* noop */
+    }
+
+    if (isWelcome && hasSbSession) {
+      // Priming: on mémorise le chemin actuel mais on force __lastMetaPVTime très ancien
+      // pour que la prochaine navigation (ex: /create-pitch) déclenche bien un PageView Meta.
+      window.__lastMetaPVPath = metaPath;
+      window.__lastMetaPVTime = 0; // permet de tracer immédiatement à la prochaine route
+      return; // ⛔ rien d'envoyé sur /welcome
+    }
+
+    // --- 2) GA : OK à chaque nav SPA (sauf cas bloqués ci-dessus) ---
+    if (typeof window.gtag === "function") {
+      window.gtag("event", "page_view", { page_path: gaPath });
+    }
+
+    // --- 3) META Pixel : anti-doublon + anti-rebond ---
+    if (typeof window.fbq === "function") {
       const now = Date.now();
 
-      // 1er rendu : on initialise seulement
+      // Premier passage : initialiser le mémo sans tirer
       if (!window.__lastMetaPVPath) {
         window.__lastMetaPVPath = metaPath;
         window.__lastMetaPVTime = now;
@@ -39,13 +73,15 @@ export default function AnalyticsTracker() {
       }
 
       const pathChanged = window.__lastMetaPVPath !== metaPath;
-      const tooSoon = now - (window.__lastMetaPVTime || 0) < 800; // anti-rebond soft
+      const tooSoon = now - (window.__lastMetaPVTime || 0) < 800; // antirebond doux
 
       if (pathChanged && !tooSoon) {
         window.fbq("track", "PageView");
         window.__lastMetaPVPath = metaPath;
         window.__lastMetaPVTime = now;
       }
+    } else {
+      console.warn("Meta Pixel (fbq) is not available.");
     }
   }, [location]);
 
