@@ -1,19 +1,22 @@
 // src/AppRouter.tsx
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { RouteGate } from "./auth/RouteGate";
+import RootLayout from "./layout/RootLayout"; // Import RootLayout
 
 // Pages
 import GetStartedPage from "./pages/GetStartedPage";
 import OopsPage from "./pages/OopsPage";
 import WelcomePage from "./pages/WelcomePage";
 import CreatePitchPage from "./pages/CreatePitchPage";
-import ThankYouPage from "./pages/ThankYouPage"; // page unifiée (variant)
+import ThankYouPage from "./pages/ThankYouPage";
 import AuthCallback from "./pages/AuthCallback";
 
 const router = createBrowserRouter([
   {
-    // L'élément englobant contient maintenant RootLayout ET AnalyticsTracker
-
+    // ✅ RootLayout is now the main element for this route branch
+    element: <RootLayout />,
+    // Optional: Add an error element for errors within the layout itself
+    // errorElement: <SomeErrorBoundary />,
     children: [
       // Accueil public
       {
@@ -24,9 +27,10 @@ const router = createBrowserRouter([
           </RouteGate>
         ),
       },
+      // Callback Supabase (doesn't need the main layout usually, but can stay here)
       { path: "/auth/callback", element: <AuthCallback /> },
 
-      // Page d’erreur dédiée (optionnelle : on garde /oops si tu veux un lien direct)
+      // Page d’erreur dédiée
       {
         path: "/oops",
         element: (
@@ -56,7 +60,7 @@ const router = createBrowserRouter([
         ),
       },
 
-      // Merci "check email" — accès via ?mode=check-email
+      // Merci "check email"
       {
         path: "/thank-you",
         element: (
@@ -66,7 +70,7 @@ const router = createBrowserRouter([
         ),
       },
 
-      // Merci après envoi audio — nécessite le flag (cf. RouteGate)
+      // Merci après envoi audio
       {
         path: "/thank-you/submitted",
         element: (
@@ -76,17 +80,20 @@ const router = createBrowserRouter([
         ),
       },
 
-      // Fallback : retourne à l’accueil
+      // Fallback : retourne à l’accueil (ou affiche OopsPage)
       {
         path: "*",
         element: (
           <RouteGate mode="any">
-            <GetStartedPage />
+            {/* Ou redirige vers OopsPage pour plus de clarté */}
+            <OopsPage />
+            {/* <GetStartedPage /> */}
           </RouteGate>
         ),
       },
     ],
   },
+  // You could define other top-level routes here if they don't use RootLayout
 ]);
 
 export default function AppRouter() {

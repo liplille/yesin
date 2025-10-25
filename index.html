@@ -51,9 +51,65 @@
         "description": "Faites découvrir votre projet localement grâce à des pitchs audio authentiques."
       }
     </script>
+
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-JX3H9E5X0Y"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      // Détermine si on est en environnement de développement (localhost ou 127.0.0.1)
+      const isDev =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+      gtag("config", "G-JX3H9E5X0Y", {
+        send_page_view: false, // Important pour une SPA, les page_view sont gérées manuellement
+        debug_mode: isDev, // Active le mode debug GA4 (visible dans DebugView) en dev
+      });
+    </script>
   </head>
   <body class="bg-[--color-bg] text-[--color-fg] antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <script>
+      !(function (f, b, e, v, n, t, s) {
+        if (f.fbq) return;
+        n = f.fbq = function () {
+          n.callMethod
+            ? n.callMethod.apply(n, arguments)
+            : n.queue.push(arguments);
+        };
+        if (!f._fbq) f._fbq = n;
+        n.push = n;
+        n.loaded = !0;
+        n.version = "2.0";
+        n.queue = [];
+        t = b.createElement(e);
+        t.async = !0;
+        t.src = v;
+        s = b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t, s);
+      })(
+        window,
+        document,
+        "script",
+        "https://connect.facebook.net/en_US/fbevents.js"
+      );
+      fbq("init", "784685721039545");
+      //
+    </script>
+    <noscript>
+      <img
+        height="1"
+        width="1"
+        style="display: none"
+        src="https://www.facebook.com/tr?id=784685721039545&ev=PageView&noscript=1"
+      />
+    </noscript>
   </body>
 </html>
