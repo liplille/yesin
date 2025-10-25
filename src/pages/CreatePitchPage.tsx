@@ -14,12 +14,6 @@ import {
 } from "@heroicons/react/24/solid";
 import type { RootOutletContext } from "../layout/RootLayout"; // Importer le type du contexte
 
-declare global {
-  interface Window {
-    fbq?: (...args: any[]) => void;
-  }
-}
-
 // Définir correctement les props pour SoundWaveBars
 type SoundWaveBarsProps = {
   color?: string;
@@ -154,18 +148,6 @@ export default function CreatePitchPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRecording]);
 
-  useEffect(() => {
-    const fromMagic = sessionStorage.getItem("cameFromMagic") === "1";
-    const alreadyFired =
-      sessionStorage.getItem("conv2:completeRegistration:fired") === "1";
-
-    if (fromMagic && !alreadyFired && window.fbq) {
-      window.fbq("track", "CompleteRegistration");
-      sessionStorage.setItem("conv2:completeRegistration:fired", "1");
-      sessionStorage.removeItem("cameFromMagic");
-    }
-  }, []);
-
   const handleStartRecording = async () => {
     setError(null);
     setAudioBlob(null);
@@ -218,10 +200,6 @@ export default function CreatePitchPage() {
       mediaRecorderRef.current = recorder;
       recorder.start();
 
-      if (window.fbq && !sessionStorage.getItem("conv3:startTrial:fired")) {
-        window.fbq("track", "StartTrial");
-        sessionStorage.setItem("conv3:startTrial:fired", "1");
-      }
       setIsRecording(true);
     } catch (err: any) {
       let errMsg = "Impossible de démarrer l'enregistrement.";

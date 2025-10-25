@@ -1,8 +1,6 @@
 // src/AppRouter.tsx
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import RootLayout from "./layout/RootLayout";
 import { RouteGate } from "./auth/RouteGate";
-import AnalyticsTracker from "./components/AnalyticsTracker"; // <-- Importer le tracker
 
 // Pages
 import GetStartedPage from "./pages/GetStartedPage";
@@ -15,13 +13,7 @@ import AuthCallback from "./pages/AuthCallback";
 const router = createBrowserRouter([
   {
     // L'élément englobant contient maintenant RootLayout ET AnalyticsTracker
-    element: (
-      <>
-        <RootLayout />
-        {/* Condition pour n'activer le tracker qu'en production */}
-        {import.meta.env.PROD && <AnalyticsTracker />}
-      </>
-    ),
+
     children: [
       // Accueil public
       {
