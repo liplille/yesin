@@ -154,9 +154,8 @@ function HeroCreatorMessage({ geoCity }: { geoCity: string | null }) {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row flex-wrap items-center">
           <Link
             to="/welcome" // Lien vers la page d'inscription/connexion
-            className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 font-semibold text-white shadow-lg hover:opacity-90 whitespace-nowrap"
+            className="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 font-semibold text-white shadow-lg hover:opacity-90 text-center"
           >
-            {/* Texte du bouton adapté si la ville est connue */}
             {cityDisplay
               ? `🎙️ Faites-vous entendre à ${cityDisplay}`
               : "🎙️ Faites-vous entendre"}
