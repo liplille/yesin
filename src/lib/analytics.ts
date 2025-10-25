@@ -31,16 +31,14 @@ if (DEBUG_ANALYTICS) {
  * Si non, la marque et retourne true. Sinon, retourne false.
  */
 function safeOnce(key: string): boolean {
-  // --- AJOUT : Vérification window ---
-  if (typeof window === "undefined") return false;
-  // --- FIN AJOUT ---
+  if (typeof window === "undefined") return false; // Ne rien faire côté serveur ou si window n'existe pas
   if (!window.__analyticsFlags) {
     window.__analyticsFlags = new Set();
   }
   if (window.__analyticsFlags.has(key)) {
-    return false;
+    return false; // Déjà tracé
   }
-  window.__analyticsFlags.add(key);
+  window.__analyticsFlags.add(key); // Marquer comme tracé
   return true;
 }
 
@@ -52,12 +50,10 @@ export function trackPageView(
   title?: string,
   params: GAParams = {}
 ) {
-  // --- AJOUT : Vérification window ---
-  if (typeof window === "undefined") return;
-  // --- FIN AJOUT ---
+  if (typeof window === "undefined") return; // Vérification window
 
-  const pageLocation = window.location.href;
-  const pageTitle = title ?? document.title;
+  const pageLocation = window.location.href; // URL complète actuelle
+  const pageTitle = title ?? document.title; // Titre de la page
 
   // --- GA4 PageView ---
   try {
@@ -65,19 +61,16 @@ export function trackPageView(
       window.gtag("event", "page_view", {
         page_title: pageTitle,
         page_location: pageLocation,
-        page_path: path,
+        page_path: path, // Chemin relatif (ex: /create-pitch?param=1)
         ...params,
       });
-      // --- Log conditionnel ---
       if (DEBUG_ANALYTICS)
         console.debug(`[Analytics] GA PageView: ${path}`, {
           page_title: pageTitle,
           page_location: pageLocation,
           ...params,
         });
-      // --- Fin Log ---
     } else if (DEBUG_ANALYTICS) {
-      // Log warning seulement si debug activé
       console.warn("[Analytics] window.gtag non trouvé pour PageView.");
     }
   } catch (error) {
@@ -88,11 +81,8 @@ export function trackPageView(
   try {
     if (window.fbq) {
       window.fbq("track", "PageView");
-      // --- Log conditionnel ---
       if (DEBUG_ANALYTICS) console.debug(`[Analytics] Meta PageView`);
-      // --- Fin Log ---
     } else if (DEBUG_ANALYTICS) {
-      // Log warning seulement si debug activé
       console.warn("[Analytics] window.fbq non trouvé pour PageView.");
     }
   } catch (error) {
@@ -106,21 +96,17 @@ export function trackPageView(
 export function trackEvent(
   name: string,
   gaParams: GAParams = {},
-  metaName?: string,
+  metaName?: string, // Nom standard Meta optionnel
   metaParams: MetaParams = {}
 ) {
-  // --- AJOUT : Vérification window ---
-  if (typeof window === "undefined") return;
-  // --- FIN AJOUT ---
+  if (typeof window === "undefined") return; // Vérification window
 
   // --- GA4 Event ---
   try {
     if (window.gtag) {
       window.gtag("event", name, gaParams);
-      // --- Log conditionnel ---
       if (DEBUG_ANALYTICS)
         console.debug(`[Analytics] GA Event: ${name}`, gaParams);
-      // --- Fin Log ---
     } else if (DEBUG_ANALYTICS) {
       console.warn(`[Analytics] window.gtag non trouvé pour Event: ${name}.`);
     }
@@ -132,20 +118,18 @@ export function trackEvent(
   try {
     if (window.fbq) {
       if (metaName) {
+        // Événement standard Meta
         window.fbq("track", metaName, metaParams);
-        // --- Log conditionnel ---
         if (DEBUG_ANALYTICS)
           console.debug(
             `[Analytics] Meta Standard Event: ${metaName}`,
             metaParams
           );
-        // --- Fin Log ---
       } else {
+        // Événement custom Meta (utilise le nom GA4 par défaut)
         window.fbq("trackCustom", name, metaParams);
-        // --- Log conditionnel ---
         if (DEBUG_ANALYTICS)
           console.debug(`[Analytics] Meta Custom Event: ${name}`, metaParams);
-        // --- Fin Log ---
       }
     } else if (DEBUG_ANALYTICS) {
       console.warn(
@@ -162,10 +146,9 @@ export function trackEvent(
 
 /**
  * Déclenche un événement une seule fois par session d'onglet.
- * La clé de session doit être unique et fournie par l'appelant.
  */
 export function trackEventOnce(
-  sessionKey: string, // La clé complète est attendue (ex: 'recording_start:demo')
+  sessionKey: string, // La clé doit maintenant être fournie complète par l'appelant
   name: string,
   gaParams: GAParams = {},
   metaName?: string,
@@ -174,22 +157,26 @@ export function trackEventOnce(
   if (safeOnce(sessionKey)) {
     trackEvent(name, gaParams, metaName, metaParams);
   } else {
-    // --- Log conditionnel ---
     if (DEBUG_ANALYTICS)
       console.debug(
         `[Analytics] EventOnce: ${name} (déjà tracé pour la clé ${sessionKey})`
       );
-    // --- Fin Log ---
   }
 }
 
 /**
  * Détermine si un chemin doit être tracé comme une page_view.
+ * Exclut les callbacks, certaines pages si auth, et /create-pitch?new=1.
  */
 export function shouldTrackPath(
   pathname: string,
   isAuthenticated: boolean
 ): boolean {
+  // Récupère les query params actuels (nécessaire pour la condition /create-pitch?new=1)
+  const currentSearch =
+    typeof window !== "undefined" ? window.location.search : "";
+
+  // Exclusions techniques générales
   const excludedPaths = ["/auth/callback"];
   if (excludedPaths.some((p) => pathname.startsWith(p))) {
     if (DEBUG_ANALYTICS)
@@ -199,6 +186,22 @@ export function shouldTrackPath(
     return false;
   }
 
+  // --- AJOUT CORRECTION : Ignorer /create-pitch?new=1 ---
+  // Ignore la page view initiale qui contient ce paramètre car elle sera
+  // immédiatement suivie d'une autre page view après nettoyage de l'URL.
+  if (
+    pathname === "/create-pitch" &&
+    new URLSearchParams(currentSearch).has("new")
+  ) {
+    if (DEBUG_ANALYTICS)
+      console.debug(
+        `[Analytics] Path ${pathname}?new=... ignoré (sera retracé après nettoyage URL).`
+      );
+    return false;
+  }
+  // --- FIN AJOUT CORRECTION ---
+
+  // Exclusions si l'utilisateur est authentifié
   if (isAuthenticated) {
     const excludedWhenAuthenticated = ["/welcome"];
     if (excludedWhenAuthenticated.some((p) => pathname.startsWith(p))) {
@@ -209,6 +212,8 @@ export function shouldTrackPath(
       return false;
     }
   }
+
+  // Si aucune règle d'exclusion ne s'applique
   return true;
 }
 
@@ -249,7 +254,7 @@ export const emit = {
       ...context,
     });
   },
-  // ✅ La clé de session est construite ici avant d'appeler trackEventOnce
+  // La clé de session est construite ici
   recordingStartOnce: (context: GAParams = {}) => {
     const sessionKey = `${Events.RECORDING_START}:${
       context.recorder_type || context.page || "default"
@@ -274,10 +279,9 @@ export const emit = {
       ...context,
     });
   },
+  // Note: L'appel principal pour ce CTA (avec callback) se fait directement dans ExitIntentModal
+  // Cet appel via 'emit' reste ici comme fallback ou pour d'autres usages potentiels.
   exitIntentCTAClick: (cta_label: string, context: GAParams = {}) => {
-    // Note : l'appel direct à gtag/fbq pour le callback est dans ExitIntentModal.tsx
-    // Cet appel ici reste utile si on veut tracer SANS callback (ex: clic droit, autre action)
-    // ou si on retire la logique de callback plus tard.
     trackEvent(
       Events.EXIT_INTENT_CTA_CLICK,
       { cta_label, ...context },
@@ -286,9 +290,3 @@ export const emit = {
     );
   },
 };
-
-// --- Pour le Debug en développement (Confirmé) ---
-if (import.meta.env.DEV) {
-  // Le message est déjà affiché au début si DEBUG_ANALYTICS est vrai.
-  // console.log('[Analytics] Mode développement actif.');
-}
