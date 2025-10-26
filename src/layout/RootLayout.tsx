@@ -204,7 +204,7 @@ export default function RootLayout() {
             </div>
             {/* Affiché uniquement sur les petits écrans (mobile) */}
             <a
-              href="https://wa.me/3366668573" // Mettez le bon numéro ici
+              href="https://wa.me/33666868573" // Mettez le bon numéro ici
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-lg bg-green-500 px-3 py-1.5 text-xs text-white md:hidden"
