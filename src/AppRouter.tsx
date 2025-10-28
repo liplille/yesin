@@ -10,6 +10,7 @@ import WelcomePage from "./pages/WelcomePage";
 import CreatePitchPage from "./pages/CreatePitchPage";
 import ThankYouPage from "./pages/ThankYouPage";
 import AuthCallback from "./pages/AuthCallback";
+import UnsubscribeSuccessPage from "./pages/UnsubscribeSuccessPage";
 
 const router = createBrowserRouter([
   {
@@ -79,7 +80,16 @@ const router = createBrowserRouter([
           </RouteGate>
         ),
       },
-
+      {
+        path: "/unsubscribe/success",
+        element: (
+          <RouteGate mode="any">
+            {" "}
+            {/* Accessible par tous */}
+            <UnsubscribeSuccessPage />
+          </RouteGate>
+        ),
+      },
       // Fallback : retourne à l’accueil (ou affiche OopsPage)
       {
         path: "*",
