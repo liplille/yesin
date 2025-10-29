@@ -112,7 +112,7 @@ export default function AuthForm({
           />{" "}
           {/* */}
         </svg>
-        S'inscrire avec Google
+        Se connecter avec Google
       </button>
       {/* Séparateur */}
       <div className="my-4 flex items-center">
