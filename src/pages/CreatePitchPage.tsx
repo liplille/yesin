@@ -11,32 +11,45 @@ import {
   MapPinIcon,
   MicrophoneIcon,
   CheckCircleIcon,
+  BuildingStorefrontIcon, // Commerce
+  BriefcaseIcon, // Entreprise
+  CalendarDaysIcon, // Événement
+  ShareIcon, // Réseaux
+  ChevronDownIcon,
 } from "@heroicons/react/24/solid";
 import type { RootOutletContext } from "../layout/RootLayout"; // Importer le type du contexte
 import { emit } from "../lib/analytics"; // Importez emit
 
-const SCRIPT_EXAMPLES = [
+// --- AJOUT : Structure pour les exemples AVEC icônes Heroicons ---
+type ScriptExample = {
+  category: string;
+  icon: React.ElementType; // Utilise Heroicon comme composant
+  text: string;
+};
+
+const SCRIPT_EXAMPLES: ScriptExample[] = [
   {
-    category: "Commerce local",
-    emoji: "🛍️",
+    category: "Commerce",
+    icon: BuildingStorefrontIcon,
     text: "Hello ! Ici [NOM] de [NOM DU COMMERCE]. Chez nous, on aime les produits locaux et la bonne humeur ! Passez nous voir, dites “YesIn” et profitez d'une petite surprise 🎁",
   },
   {
-    category: "Entreprise / Service",
-    emoji: "💼",
-    text: "Bonjour, je suis [VOTRE PRÉNOM], fondateur de [NOM DE L’ENTREPRISE]. Nous aidons [CLIENT CIBLE] à [RÉSULTAT]. Si vous avez besoin de nous, contactez-nous sur yesin.media 😉",
+    category: "Entreprise",
+    icon: BriefcaseIcon,
+    text: "Bonjour, je suis [VOTRE PRÉNOM], fondateur de [NOM DE L’ENTREPRISE]. Nous aidons [CLIENT CIBLE] à [RÉSULTAT]. Si vous avez besoin de nous, contactez-nous sur YesIn.media 😉",
   },
   {
     category: "Événement",
-    emoji: "🎉",
+    icon: CalendarDaysIcon,
     text: "Salut la communauté ! Ce [DATE], on organise [TYPE D'ÉVÉNEMENT] à [LIEU]. Venez partager un moment convivial, il y aura [DÉTAIL ATTRACTIF]. À très vite !",
   },
   {
-    category: "Réseaux sociaux / créateur",
-    emoji: "📲",
-    text: "Hey ! Moi c’est [PSEUDO], je crée du contenu sur [THÈME]. Si tu veux découvrir l’aventure, suis-moi sur mes réseaux et dis-moi que tu viens de YesIn 👋",
+    category: "Réseaux",
+    icon: ShareIcon,
+    text: "Hey ! Moi c’est [PSEUDO], je crée du contenu sur [THÈME]. Si tu veux découvrir l’aventure, suis-moi sur mes réseaux et dis-moi que tu viens de YesIn.media 👋",
   },
 ];
+// --- FIN AJOUT ---
 
 // Définir correctement les props pour SoundWaveBars
 type SoundWaveBarsProps = {
@@ -148,7 +161,9 @@ export default function CreatePitchPage() {
   const { geoCoords, geoLocate } = useOutletContext<RootOutletContext>();
   // Ref pour s'assurer que l'événement signUpComplete n'est tracé qu'une fois
   const signupTrackedRef = useRef(false);
-
+  // --- AJOUT : État pour l'onglet actif ---
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  // --- FIN AJOUT ---
   // --- Track Sign Up Complete ---
   useEffect(() => {
     // Vérifie si le flag 'cameFromMagic' est présent dans sessionStorage (posé par AuthCallback)
@@ -588,29 +603,63 @@ export default function CreatePitchPage() {
         )}
       </div>{" "}
       {/* Fin du conteneur principal du bloc */}
-      {/* --- EXEMPLES DE SCRIPTS --- */}
-      <div className="mt-10">
-        <h4 className="text-center font-bold mb-4">
-          Pas d’inspiration ? Essayez un script 👇
-        </h4>
+      {/* --- SECTION EXEMPLES DE SCRIPTS (MODIFIÉE avec <details>) --- */}
+      <div className="mb-10 mt-10 text-left">
+        {/* L'élément <details> contient tout */}
+        <details className="group rounded-lg border border-black/10 dark:border-white/10 open:shadow-md transition-shadow duration-200">
+          {/* Le <summary> est la partie toujours visible */}
+          <summary className="flex cursor-pointer items-center justify-between gap-2 p-4 hover:bg-white/5 transition-colors list-none">
+            <span className="font-semibold">
+              💡 Pas d’inspiration ? Voir des modèles
+            </span>
+            {/* Icône flèche qui tourne à l'ouverture */}
+            <ChevronDownIcon className="h-5 w-5 text-fg/60 transition-transform duration-200 group-open:rotate-180" />
+          </summary>
 
-        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory px-2 pb-2">
-          {SCRIPT_EXAMPLES.map((sample, i) => (
-            <div
-              key={i}
-              className="min-w-[260px] snap-center bg-white/5 border border-white/10 rounded-xl p-4 shadow-md flex flex-col justify-between"
-            >
-              <div className="text-2xl mb-2">{sample.emoji}</div>
-              <p className="font-semibold text-sm opacity-80 mb-2">
-                {sample.category}
-              </p>
-              <p className="text-sm opacity-90 leading-relaxed">
-                {sample.text}
-              </p>
+          {/* Contenu caché par défaut */}
+          <div className="border-t border-black/10 dark:border-white/10 p-4">
+            {/* Barre d'onglets */}
+            <div className="mb-4 flex flex-wrap justify-center gap-2">
+              {SCRIPT_EXAMPLES.map((example, index) => (
+                <button
+                  key={example.category}
+                  onClick={() => setActiveTabIndex(index)}
+                  className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs sm:text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                    activeTabIndex === index
+                      ? "bg-primary/10 text-primary font-semibold"
+                      : "text-fg/70 hover:bg-white/5 hover:text-fg/90"
+                  }`}
+                  role="tab"
+                  aria-selected={activeTabIndex === index}
+                  aria-controls={`script-panel-${index}`}
+                  id={`script-tab-${index}`}
+                >
+                  <example.icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                  {example.category}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
+
+            {/* Panneaux de contenu */}
+            <div className="rounded-md bg-white/5 p-4 min-h-[100px] flex flex-col items-center justify-center text-center border border-black/5 dark:border-white/5 shadow-inner">
+              {SCRIPT_EXAMPLES.map((example, index) => (
+                <div
+                  key={example.category}
+                  hidden={activeTabIndex !== index}
+                  role="tabpanel"
+                  aria-labelledby={`script-tab-${index}`}
+                  id={`script-panel-${index}`}
+                >
+                  <p className="text-sm opacity-75 whitespace-pre-wrap leading-relaxed">
+                    {example.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </details>
       </div>
+      {/* --- FIN SECTION EXEMPLES --- */}
       {/* Section Conseils */}
       <div className="mt-12 text-left">
         <h4 className="text-center font-bold mb-4">
