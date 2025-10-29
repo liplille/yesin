@@ -15,6 +15,29 @@ import {
 import type { RootOutletContext } from "../layout/RootLayout"; // Importer le type du contexte
 import { emit } from "../lib/analytics"; // Importez emit
 
+const SCRIPT_EXAMPLES = [
+  {
+    category: "Commerce local",
+    emoji: "🛍️",
+    text: "Hello ! Ici [NOM] de [NOM DU COMMERCE]. Chez nous, on aime les produits locaux et la bonne humeur ! Passez nous voir, dites “YesIn” et profitez d'une petite surprise 🎁",
+  },
+  {
+    category: "Entreprise / Service",
+    emoji: "💼",
+    text: "Bonjour, je suis [VOTRE PRÉNOM], fondateur de [NOM DE L’ENTREPRISE]. Nous aidons [CLIENT CIBLE] à [RÉSULTAT]. Si vous avez besoin de nous, contactez-nous sur yesin.media 😉",
+  },
+  {
+    category: "Événement",
+    emoji: "🎉",
+    text: "Salut la communauté ! Ce [DATE], on organise [TYPE D'ÉVÉNEMENT] à [LIEU]. Venez partager un moment convivial, il y aura [DÉTAIL ATTRACTIF]. À très vite !",
+  },
+  {
+    category: "Réseaux sociaux / créateur",
+    emoji: "📲",
+    text: "Hey ! Moi c’est [PSEUDO], je crée du contenu sur [THÈME]. Si tu veux découvrir l’aventure, suis-moi sur mes réseaux et dis-moi que tu viens de YesIn 👋",
+  },
+];
+
 // Définir correctement les props pour SoundWaveBars
 type SoundWaveBarsProps = {
   color?: string;
@@ -565,6 +588,29 @@ export default function CreatePitchPage() {
         )}
       </div>{" "}
       {/* Fin du conteneur principal du bloc */}
+      {/* --- EXEMPLES DE SCRIPTS --- */}
+      <div className="mt-10">
+        <h4 className="text-center font-bold mb-4">
+          Pas d’inspiration ? Essayez un script 👇
+        </h4>
+
+        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory px-2 pb-2">
+          {SCRIPT_EXAMPLES.map((sample, i) => (
+            <div
+              key={i}
+              className="min-w-[260px] snap-center bg-white/5 border border-white/10 rounded-xl p-4 shadow-md flex flex-col justify-between"
+            >
+              <div className="text-2xl mb-2">{sample.emoji}</div>
+              <p className="font-semibold text-sm opacity-80 mb-2">
+                {sample.category}
+              </p>
+              <p className="text-sm opacity-90 leading-relaxed">
+                {sample.text}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
       {/* Section Conseils */}
       <div className="mt-12 text-left">
         <h4 className="text-center font-bold mb-4">
