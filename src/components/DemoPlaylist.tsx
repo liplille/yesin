@@ -38,6 +38,12 @@ function formatRelativeTime(dateString: string): string {
   const days = Math.round(hours / 24);
   return `il y a ${days} j`;
 }
+function formatToTimeOnly(dateString: string): string {
+  const date = new Date(dateString);
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `Déposé à ${hours}:${minutes}`;
+}
 
 export default function DemoPodcastPlayer() {
   const [demos, setDemos] = useState<DemoFile[]>([]);
@@ -277,7 +283,7 @@ export default function DemoPodcastPlayer() {
         <div className="flex-1 min-w-0">
           <p className="font-semibold truncate">Derniers essais partagés</p>
           <p className="text-xs opacity-70">
-            {currentTrack ? formatRelativeTime(currentTrack.created_at) : "--"}
+            {currentTrack ? formatToTimeOnly(currentTrack.created_at) : "--"}
           </p>
           <div className="mt-2 space-y-1">
             {/* Barre de progression */}
@@ -378,7 +384,7 @@ export default function DemoPodcastPlayer() {
                   Essai #{demos.length - index}
                 </span>
                 <span className="text-xs opacity-60 flex-shrink-0">
-                  {formatRelativeTime(demo.created_at)}
+                  {formatToTimeOnly(demo.created_at)}
                 </span>
               </button>
             </li>
