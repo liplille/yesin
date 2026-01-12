@@ -25,7 +25,7 @@ function formatTime(seconds: number): string {
   return `${min}:${sec.toString().padStart(2, "0")}`;
 }
 
-function formatRelativeTime(dateString: string): string {
+/* function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
   const seconds = Math.round((now.getTime() - date.getTime()) / 1000);
@@ -37,7 +37,8 @@ function formatRelativeTime(dateString: string): string {
   if (hours < 24) return `il y a ${hours} h`;
   const days = Math.round(hours / 24);
   return `il y a ${days} j`;
-}
+} */
+
 function formatToTimeOnly(dateString: string): string {
   const date = new Date(dateString);
   const hours = date.getHours().toString().padStart(2, "0");
