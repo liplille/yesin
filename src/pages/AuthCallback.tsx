@@ -9,6 +9,20 @@ declare global {
   }
 }
 
+function parseHashTokens(hash: string) {
+  // hash attendu: "#access_token=...&refresh_token=...&type=magiclink" etc.
+  const h = hash.startsWith("#") ? hash.slice(1) : hash;
+  const p = new URLSearchParams(h);
+
+  const access_token = p.get("access_token");
+  const refresh_token = p.get("refresh_token");
+
+  if (access_token && refresh_token) {
+    return { access_token, refresh_token };
+  }
+  return null;
+}
+
 export default function AuthCallback() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -21,13 +35,8 @@ export default function AuthCallback() {
       console.log("[AuthCallback] search:", window.location.search);
       console.log("[AuthCallback] hash:", window.location.hash);
 
-      // Nettoyage visuel de l’URL (retire le hash pour éviter un 2e PageView)
+      // Synchronise la dernière URL tracée côté Meta
       const cleanPath = window.location.pathname + window.location.search;
-      if (window.location.hash) {
-        try {
-          history.replaceState(null, "", cleanPath);
-        } catch {}
-      }
       window.__lastMetaPVPath = cleanPath;
 
       const params = new URLSearchParams(location.search);
@@ -39,41 +48,52 @@ export default function AuthCallback() {
         const url = new URL(href);
         const hasCode = url.searchParams.has("code");
 
-        let session = null as any;
+        let session: any = null;
 
+        // 1) PKCE flow (si on a code=...)
         if (hasCode) {
-          // PKCE flow (code=...)
           const { data, error } = await supabase.auth.exchangeCodeForSession(
             href
           );
           if (error) throw error;
-          session = data.session ?? null;
+          session = data?.session ?? null;
         } else {
-          // Implicit flow (tokens dans le hash)
-          const { data, error } = await supabase.auth.getSessionFromUrl({
-            storeSession: true,
-          });
-          if (error)
-            console.warn("[AuthCallback] getSessionFromUrl error:", error);
-          session = data.session ?? null;
+          // 2) Implicit flow : tokens dans le hash => setSession
+          const tokens = parseHashTokens(window.location.hash);
+          if (tokens) {
+            const { data, error } = await supabase.auth.setSession(tokens);
+            if (error) throw error;
+            session = data?.session ?? null;
+          }
         }
 
-        // Fallback: peut déjà être stockée
+        // 3) Fallback : session peut déjà être stockée
         if (!session) {
           const { data } = await supabase.auth.getSession();
-          session = data.session ?? null;
+          session = data?.session ?? null;
         }
 
         if (!session) {
-          console.error("[AuthCallback] No session obtained from URL.");
+          console.error(
+            "[AuthCallback] No session obtained. (No code=, no hash tokens, no stored session)"
+          );
           navigate("/thank-you?mode=check-email", { replace: true });
           return;
         }
 
+        // Nettoyage visuel de l’URL (retire le hash pour éviter un 2e PageView)
+        if (window.location.hash) {
+          try {
+            history.replaceState(null, "", cleanPath);
+          } catch {}
+        }
+
         sessionStorage.setItem("cameFromMagic", "1");
 
-        // Finalize lead
+        // 4) Finalize lead
         if (leadId) {
+          console.log("[AuthCallback] finalize_lead start", { leadId });
+
           const r = await fetch(
             "https://iylpizhkwuybdxrcvsat.supabase.co/functions/v1/finalize_lead",
             {
@@ -86,20 +106,17 @@ export default function AuthCallback() {
             }
           );
 
-          const text = await r.text().catch(() => "");
+          const txt = await r.text().catch(() => "");
           if (!r.ok) {
-            console.error(
-              "[AuthCallback] finalize_lead failed:",
-              r.status,
-              text
-            );
+            console.error("[AuthCallback] finalize_lead failed", r.status, txt);
           } else {
-            console.log("[AuthCallback] finalize_lead OK:", text);
+            console.log("[AuthCallback] finalize_lead OK", txt);
           }
         } else {
-          console.log("[AuthCallback] No leadId to finalize.");
+          console.log("[AuthCallback] No leadId to finalize");
         }
 
+        console.log("[AuthCallback] redirect ->", next);
         navigate(next, { replace: true });
       } catch (err) {
         console.error("[AuthCallback] error:", err);
