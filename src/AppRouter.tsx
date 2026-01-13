@@ -11,6 +11,7 @@ import CreatePitchPage from "./pages/CreatePitchPage";
 import ThankYouPage from "./pages/ThankYouPage";
 import AuthCallback from "./pages/AuthCallback";
 import UnsubscribeSuccessPage from "./pages/UnsubscribeSuccessPage";
+import ListingPage from "./pages/ListingPage";
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,14 @@ const router = createBrowserRouter([
         element: (
           <RouteGate mode="any">
             <GetStartedPage />
+          </RouteGate>
+        ),
+      },
+      {
+        path: "/presence",
+        element: (
+          <RouteGate mode="any">
+            <ListingPage />
           </RouteGate>
         ),
       },
