@@ -376,7 +376,7 @@ export default function ListingPage() {
 
             {/* TIMER */}
             <div
-              className={`shrink-0 rounded-2xl border px-4 py-3 text-center shadow-lg ${
+              className={`w-full sm:w-auto rounded-2xl border px-4 py-3 text-center shadow-lg ${
                 windowOpen
                   ? "border-primary/30 bg-primary/10"
                   : "border-red-500/30 bg-red-500/10"
@@ -384,7 +384,7 @@ export default function ListingPage() {
               aria-live="polite"
               title="Temps restant jusqu’à minuit"
             >
-              <div className="flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-widest opacity-80">
+              <div className="flex items-center justify-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest opacity-80">
                 <ClockIcon
                   className={`h-4 w-4 ${
                     windowOpen ? "text-primary" : "text-red-400"
@@ -396,7 +396,7 @@ export default function ListingPage() {
                 </span>
               </div>
 
-              <div className="mt-1 tabular-nums text-2xl font-black">
+              <div className="mt-1 tabular-nums text-xl sm:text-2xl font-black">
                 {pad2(hh)}:{pad2(mm)}:{pad2(ss)}
               </div>
 
