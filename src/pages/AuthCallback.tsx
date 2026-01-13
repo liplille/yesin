@@ -48,6 +48,11 @@ export default function AuthCallback() {
 
         // 2) Finalize lead (si on a un lead_id)
         const params = new URLSearchParams(location.search);
+        console.log("DEBUG - LeadID dans URL:", params.get("lead_id"));
+        console.log(
+          "DEBUG - LeadID dans Storage:",
+          sessionStorage.getItem("presenceLeadId")
+        );
         const leadId =
           params.get("lead_id") || sessionStorage.getItem("presenceLeadId");
 
