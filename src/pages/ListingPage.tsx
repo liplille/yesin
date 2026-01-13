@@ -102,6 +102,12 @@ export default function ListingPage() {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
+    if (session) {
+      navigate("/create-pitch", { replace: true });
+    }
+  }, [session, navigate]);
+
+  useEffect(() => {
     const t = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => window.clearInterval(t);
   }, []);
