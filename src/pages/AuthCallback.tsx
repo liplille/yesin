@@ -10,7 +10,6 @@ declare global {
 }
 
 function parseHashTokens(hash: string) {
-  // hash attendu: "#access_token=...&refresh_token=...&type=magiclink" etc.
   const h = hash.startsWith("#") ? hash.slice(1) : hash;
   const p = new URLSearchParams(h);
 
@@ -28,19 +27,21 @@ export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let safetyTimer = window.setTimeout(() => {
+      navigate("/", { replace: true });
+    }, 8000);
+
     (async () => {
       const href = window.location.href;
 
-      console.log("[AuthCallback] href:", href);
-      console.log("[AuthCallback] search:", window.location.search);
-      console.log("[AuthCallback] hash:", window.location.hash);
-
-      // Synchronise la dernière URL tracée côté Meta
+      // Dernière URL vue côté tracking
       const cleanPath = window.location.pathname + window.location.search;
       window.__lastMetaPVPath = cleanPath;
 
       const params = new URLSearchParams(location.search);
-      const next = params.get("next") || "/";
+      let next = params.get("next") || "/";
+      if (!next.startsWith("/")) next = "/";
+
       const leadId =
         params.get("lead_id") || sessionStorage.getItem("presenceLeadId");
 
@@ -50,7 +51,7 @@ export default function AuthCallback() {
 
         let session: any = null;
 
-        // 1) PKCE flow (si on a code=...)
+        // 1) PKCE flow
         if (hasCode) {
           const { data, error } = await supabase.auth.exchangeCodeForSession(
             href
@@ -58,7 +59,7 @@ export default function AuthCallback() {
           if (error) throw error;
           session = data?.session ?? null;
         } else {
-          // 2) Implicit flow : tokens dans le hash => setSession
+          // 2) Implicit flow
           const tokens = parseHashTokens(window.location.hash);
           if (tokens) {
             const { data, error } = await supabase.auth.setSession(tokens);
@@ -67,21 +68,19 @@ export default function AuthCallback() {
           }
         }
 
-        // 3) Fallback : session peut déjà être stockée
+        // 3) Fallback
         if (!session) {
           const { data } = await supabase.auth.getSession();
           session = data?.session ?? null;
         }
 
         if (!session) {
-          console.error(
-            "[AuthCallback] No session obtained. (No code=, no hash tokens, no stored session)"
-          );
+          console.error("[AuthCallback] No session obtained.");
           navigate("/thank-you?mode=check-email", { replace: true });
           return;
         }
 
-        // Nettoyage visuel de l’URL (retire le hash pour éviter un 2e PageView)
+        // Nettoyage du hash
         if (window.location.hash) {
           try {
             history.replaceState(null, "", cleanPath);
@@ -92,8 +91,6 @@ export default function AuthCallback() {
 
         // 4) Finalize lead
         if (leadId) {
-          console.log("[AuthCallback] finalize_lead start", { leadId });
-
           const r = await fetch(
             "https://iylpizhkwuybdxrcvsat.supabase.co/functions/v1/finalize_lead",
             {
@@ -106,33 +103,35 @@ export default function AuthCallback() {
             }
           );
 
-          const txt = await r.text().catch(() => "");
           if (!r.ok) {
+            const txt = await r.text().catch(() => "");
             console.error("[AuthCallback] finalize_lead failed", r.status, txt);
-          } else {
-            console.log("[AuthCallback] finalize_lead OK", txt);
           }
-        } else {
-          console.log("[AuthCallback] No leadId to finalize");
         }
 
-        console.log("[AuthCallback] redirect ->", next);
         navigate(next, { replace: true });
       } catch (err) {
         console.error("[AuthCallback] error:", err);
         navigate("/", { replace: true });
+      } finally {
+        clearTimeout(safetyTimer);
       }
     })();
+
+    return () => clearTimeout(safetyTimer);
   }, [location.search, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg text-fg">
-      <div className="rounded-3xl border border-black/10 bg-white/5 p-6 shadow-xl dark:border-white/10">
-        <div className="text-lg font-extrabold">Validation en cours…</div>
-        <div className="mt-2 text-sm opacity-75">
+    <div className="fixed inset-0 flex items-center justify-center bg-bg text-fg z-50">
+      <div className="rounded-3xl border border-black/10 bg-white/5 p-6 shadow-xl dark:border-white/10 max-w-sm w-full mx-4">
+        <div className="text-lg font-extrabold text-center">
+          Validation en cours…
+        </div>
+        <div className="mt-2 text-sm opacity-75 text-center">
           Nous confirmons votre accès puis vous redirigeons.
         </div>
-        <div className="mt-4 h-2 w-64 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+
+        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
           <div className="h-full w-1/2 animate-pulse bg-primary" />
         </div>
       </div>
