@@ -1,6 +1,6 @@
 // src/pages/ListingPage.tsx
 import { supabase } from "../lib/supabaseClient";
-
+import { useGeoAddress } from "../hooks/useGeoAddress";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import type { RootOutletContext } from "../layout/RootLayout";
@@ -59,7 +59,7 @@ type UTM = {
 // --------------------
 export default function ListingPage() {
   const [loading, setLoading] = useState(false);
-
+  const { address } = useGeoAddress({ autoLocateOnMount: true });
   const location = useLocation();
   const navigate = useNavigate();
   const { session } = useOutletContext<RootOutletContext>();
@@ -213,7 +213,7 @@ export default function ListingPage() {
             email,
             site: id,
             source_page: "/presence",
-            geo: null, // si tu veux, on branche useGeoAddress ici
+            geo: address, // si tu veux, on branche useGeoAddress ici
             utm,
           }),
         }
