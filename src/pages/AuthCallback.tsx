@@ -9,22 +9,17 @@ declare global {
   }
 }
 
-/**
- * /auth/callback
- * - Reçoit la redirection de Supabase (magic link)
- * - Échange le code pour une session
- * - Nettoie l'URL (supprime le hash #access_token=...)
- * - Marque que l'utilisateur vient bien du lien mail (cameFromMagic)
- * - Finalise le lead (lead_id -> user_id + converted_at + upsert leads)
- * - Redirige vers la page finale
- */
 export default function AuthCallback() {
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
-      const originalHref = window.location.href;
+      const href = window.location.href;
+
+      console.log("[AuthCallback] href:", href);
+      console.log("[AuthCallback] search:", window.location.search);
+      console.log("[AuthCallback] hash:", window.location.hash);
 
       // Nettoyage visuel de l’URL (retire le hash pour éviter un 2e PageView)
       const cleanPath = window.location.pathname + window.location.search;
@@ -33,55 +28,82 @@ export default function AuthCallback() {
           history.replaceState(null, "", cleanPath);
         } catch {}
       }
-
-      // Synchronise la dernière URL tracée côté Meta
       window.__lastMetaPVPath = cleanPath;
 
+      const params = new URLSearchParams(location.search);
+      const next = params.get("next") || "/";
+      const leadId =
+        params.get("lead_id") || sessionStorage.getItem("presenceLeadId");
+
       try {
-        // 1) Echange le code pour une session
-        const { data, error } = await supabase.auth.exchangeCodeForSession(
-          originalHref
-        );
-        if (error) throw error;
+        const url = new URL(href);
+        const hasCode = url.searchParams.has("code");
+
+        let session = null as any;
+
+        if (hasCode) {
+          // PKCE flow (code=...)
+          const { data, error } = await supabase.auth.exchangeCodeForSession(
+            href
+          );
+          if (error) throw error;
+          session = data.session ?? null;
+        } else {
+          // Implicit flow (tokens dans le hash)
+          const { data, error } = await supabase.auth.getSessionFromUrl({
+            storeSession: true,
+          });
+          if (error)
+            console.warn("[AuthCallback] getSessionFromUrl error:", error);
+          session = data.session ?? null;
+        }
+
+        // Fallback: peut déjà être stockée
+        if (!session) {
+          const { data } = await supabase.auth.getSession();
+          session = data.session ?? null;
+        }
+
+        if (!session) {
+          console.error("[AuthCallback] No session obtained from URL.");
+          navigate("/thank-you?mode=check-email", { replace: true });
+          return;
+        }
 
         sessionStorage.setItem("cameFromMagic", "1");
 
-        // 2) Finalize lead (si on a un lead_id)
-        const params = new URLSearchParams(location.search);
-        console.log("DEBUG - LeadID dans URL:", params.get("lead_id"));
-        console.log(
-          "DEBUG - LeadID dans Storage:",
-          sessionStorage.getItem("presenceLeadId")
-        );
-        const leadId =
-          params.get("lead_id") || sessionStorage.getItem("presenceLeadId");
+        // Finalize lead
+        if (leadId) {
+          const r = await fetch(
+            "https://iylpizhkwuybdxrcvsat.supabase.co/functions/v1/finalize_lead",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({ lead_id: leadId }),
+            }
+          );
 
-        const accessToken = data?.session?.access_token;
-
-        if (leadId && accessToken) {
-          try {
-            await fetch(
-              "https://iylpizhkwuybdxrcvsat.supabase.co/functions/v1/finalize_lead",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${accessToken}`,
-                },
-                body: JSON.stringify({ lead_id: leadId }),
-              }
+          const text = await r.text().catch(() => "");
+          if (!r.ok) {
+            console.error(
+              "[AuthCallback] finalize_lead failed:",
+              r.status,
+              text
             );
-          } catch (e) {
-            console.error("[AuthCallback] finalize_lead error:", e);
+          } else {
+            console.log("[AuthCallback] finalize_lead OK:", text);
           }
+        } else {
+          console.log("[AuthCallback] No leadId to finalize.");
         }
-      } catch (err) {
-        console.error("[AuthCallback] exchangeCodeForSession error:", err);
-      } finally {
-        // Redirect final (inchangé)
-        const params = new URLSearchParams(location.search);
-        const next = params.get("next") || "/";
+
         navigate(next, { replace: true });
+      } catch (err) {
+        console.error("[AuthCallback] error:", err);
+        navigate("/", { replace: true });
       }
     })();
   }, [location.search, navigate]);
