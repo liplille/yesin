@@ -1,6 +1,8 @@
-// src/pages/SmartListingPage.tsx
+// src/pages/ListingPage.tsx
+import { supabase } from "../lib/supabaseClient";
+
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import type { RootOutletContext } from "../layout/RootLayout";
 import {
   SparklesIcon,
@@ -44,10 +46,21 @@ function formatLocalMidnightLabel() {
   return "ce soir minuit";
 }
 
+type UTM = {
+  source?: string | null;
+  medium?: string | null;
+  campaign?: string | null;
+  content?: string | null;
+  term?: string | null;
+};
+
 // --------------------
 // Component
 // --------------------
-export default function SmartListingPage() {
+export default function ListingPage() {
+  const [loading, setLoading] = useState(false);
+
+  const location = useLocation();
   const navigate = useNavigate();
   const { session } = useOutletContext<RootOutletContext>();
 
@@ -129,42 +142,114 @@ export default function SmartListingPage() {
     return `${PRICE_EUR.toFixed(2).replace(".", ",")}€`;
   }, [windowOpen]);
 
-  const handleStart = () => {
+  // --- Query params: prefill + utm + locks ---
+  const query = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search]
+  );
+  const lockEmail = query.get("lock_email") === "1";
+  const lockSite = query.get("lock_site") === "1";
+
+  useEffect(() => {
+    // Prefill
+    const qpEmail = query.get("email");
+    const qpSite = query.get("site");
+
+    if (qpEmail && !email) setEmail(qpEmail);
+    if (qpSite && !identifier) setIdentifier(qpSite);
+
+    // UTM -> sessionStorage
+    const utm: UTM = {
+      source: query.get("utm_source"),
+      medium: query.get("utm_medium"),
+      campaign: query.get("utm_campaign"),
+      content: query.get("utm_content"),
+      term: query.get("utm_term"),
+    };
+
+    if (Object.values(utm).some(Boolean)) {
+      sessionStorage.setItem("presenceUTM", JSON.stringify(utm));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]); // volontairement sans email/identifier pour éviter boucle
+
+  const handleStart = async () => {
+    if (loading) return; // anti double-submit
     setError(null);
 
     const id = normalizeIdentifier(identifier);
-    if (!id) {
-      setError("Entre ton site web pour démarrer.");
-      return;
-    }
-
-    if (!email) {
-      setError("Entre ton email pour continuer.");
-      return;
-    }
+    if (!id) return setError("Entre ton site web pour démarrer.");
+    if (!email) return setError("Entre ton email pour continuer.");
 
     const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    if (!isValidEmail) {
-      setError("Entre un email valide.");
-      return;
-    }
+    if (!isValidEmail) return setError("Entre un email valide.");
 
     // Stockage pour la suite du tunnel
     sessionStorage.setItem("presenceIdentifier", id);
     sessionStorage.setItem("presenceEmail", email);
     sessionStorage.setItem("presenceWindowOpen", windowOpen ? "1" : "0");
+    sessionStorage.setItem("presenceSourcePage", "/presence");
 
     const next = "/create-pitch";
+
+    // Si déjà connecté -> go direct
     if (session) {
       navigate(next);
       return;
     }
 
-    const url =
-      `/welcome?next=${encodeURIComponent(next)}` +
-      `&presence=1&identifier=${encodeURIComponent(id)}`;
+    setLoading(true);
+    try {
+      const utmRaw = sessionStorage.getItem("presenceUTM");
+      const utm = utmRaw ? JSON.parse(utmRaw) : null;
 
-    navigate(url);
+      // 1) Capture lead (Edge Function)
+      const capRes = await fetch(
+        "https://iylpizhkwuybdxrcvsat.supabase.co/functions/v1/capture_lead",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            site: id,
+            source_page: "/presence",
+            geo: null, // si tu veux, on branche useGeoAddress ici
+            utm,
+          }),
+        }
+      );
+
+      const capJson = await capRes.json().catch(() => ({}));
+      if (!capRes.ok) {
+        console.error("capture_lead error", capRes.status, capJson);
+        throw new Error(
+          capJson?.error || `capture_lead failed (${capRes.status})`
+        );
+      }
+
+      const leadId = capJson.lead_id;
+      sessionStorage.setItem("presenceLeadId", leadId);
+
+      // 2) callback Supabase -> AuthCallback redirige ensuite vers next
+      const callback =
+        `${window.location.origin}/auth/callback` +
+        `?next=${encodeURIComponent(next)}` +
+        `&lead_id=${encodeURIComponent(leadId)}`;
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: callback },
+      });
+
+      if (error) throw error;
+
+      // 3) Page "allez voir votre email"
+      navigate("/thank-you?mode=check-email");
+    } catch (err: any) {
+      setError(err?.message || "Une erreur est survenue.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -230,9 +315,12 @@ export default function SmartListingPage() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
               onClick={handleStart}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3 font-semibold text-white shadow-lg hover:opacity-90"
+              disabled={loading}
+              className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-base font-extrabold text-white shadow-xl hover:opacity-90 disabled:opacity-60"
             >
-              ⚡ Activer ma pub IA <ArrowRightIcon className="h-5 w-5" />
+              {loading
+                ? "Envoi du lien..."
+                : "Créer mon accès et activer ma pub IA →"}
             </button>
 
             <a
@@ -357,7 +445,6 @@ export default function SmartListingPage() {
           {/* FORM */}
           <div className="mt-4 rounded-3xl border border-primary/35 bg-primary/10 p-4">
             <div className="flex items-center gap-2 text-sm font-semibold">
-              {/* Point ORANGE qui pulse */}
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-40"></span>
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-orange-400"></span>
@@ -382,6 +469,7 @@ export default function SmartListingPage() {
                 <input
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
+                  readOnly={lockSite}
                   placeholder="votre-site.fr"
                   className="mt-1 w-full rounded-2xl border border-black/10 bg-bg/30 px-4 py-4 text-base font-semibold outline-none placeholder:font-normal placeholder:text-slate-400 dark:placeholder:text-white/60 focus:ring-4 focus:ring-primary/25 dark:border-white/10 dark:bg-black/20"
                   autoComplete="off"
@@ -400,6 +488,7 @@ export default function SmartListingPage() {
                 <input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  readOnly={lockEmail}
                   type="email"
                   placeholder="Votre email professionnel"
                   className="mt-1 w-full rounded-2xl border border-black/10 bg-bg/30 px-4 py-4 text-base font-semibold outline-none placeholder:font-normal placeholder:text-slate-400 dark:placeholder:text-white/60 focus:ring-4 focus:ring-primary/25 dark:border-white/10 dark:bg-black/20"
@@ -413,9 +502,12 @@ export default function SmartListingPage() {
               {/* CTA */}
               <button
                 onClick={handleStart}
-                className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-base font-extrabold text-white shadow-xl hover:opacity-90"
+                disabled={loading}
+                className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-base font-extrabold text-white shadow-xl hover:opacity-90 disabled:opacity-60"
               >
-                Créer mon accès et activer ma pub IA →
+                {loading
+                  ? "Envoi du lien..."
+                  : "Créer mon accès et activer ma pub IA →"}
               </button>
 
               {error && <div className="text-sm text-red-400">{error}</div>}
@@ -441,7 +533,6 @@ export default function SmartListingPage() {
             </p>
           </div>
 
-          {/* Cartes bénéfices */}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
@@ -493,7 +584,6 @@ export default function SmartListingPage() {
             ))}
           </div>
 
-          {/* Bénéfices par profil */}
           <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { t: "Commerces", v: "Plus de visites en point de vente" },
@@ -511,11 +601,11 @@ export default function SmartListingPage() {
             ))}
           </div>
 
-          {/* CTA */}
           <div className="mt-16 text-center">
             <button
               onClick={handleStart}
-              className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-8 py-4 font-black text-white shadow-2xl hover:scale-105 transition-all"
+              disabled={loading}
+              className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-8 py-4 font-black text-white shadow-2xl hover:scale-105 transition-all disabled:opacity-60"
             >
               🚀 ACTIVER MA PUBLICITÉ IA
               <ArrowRightIcon className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
