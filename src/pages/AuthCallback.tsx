@@ -125,5 +125,17 @@ export default function AuthCallback() {
     })();
   }, [location.search, navigate]);
 
-  return null;
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-bg text-fg">
+      <div className="rounded-3xl border border-black/10 bg-white/5 p-6 shadow-xl dark:border-white/10">
+        <div className="text-lg font-extrabold">Validation en cours…</div>
+        <div className="mt-2 text-sm opacity-75">
+          Nous confirmons votre accès puis vous redirigeons.
+        </div>
+        <div className="mt-4 h-2 w-64 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+          <div className="h-full w-1/2 animate-pulse bg-primary" />
+        </div>
+      </div>
+    </div>
+  );
 }
