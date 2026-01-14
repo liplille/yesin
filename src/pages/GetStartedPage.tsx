@@ -36,6 +36,29 @@ function capitalizeFirstOnly(s: string): string {
   return t ? t[0].toUpperCase() + t.slice(1) : t;
 }
 
+function PresenceBottomNote() {
+  return (
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 mt-16 mb-12">
+      <div className="rounded-2xl border border-black/10 bg-white/5 px-4 py-3 text-sm dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-primary/80">
+          Nouveau
+        </span>
+
+        <span className="opacity-80">
+          Faites exister votre activité dans les réponses des IA.
+        </span>
+
+        <Link
+          to="/presence"
+          className="font-semibold text-primary hover:underline underline-offset-4"
+        >
+          Découvrir YesIn Presence™ →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 /** Composant : Bouton Play/Pause discret pour le message audio du créateur */
 function CreatorMessageButton() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -649,6 +672,7 @@ export default function GetStartedPage() {
           </Link>
         </div>
       </section>
+      <PresenceBottomNote />
 
       <ExitIntentModal
         open={!isLoggedIn && open}
