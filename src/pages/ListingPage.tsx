@@ -18,7 +18,7 @@ import {
 // Branding
 // --------------------
 const PRESENCE_NAME = "YesIn Presence™";
-const VOICE_NAME = "YesIn Voice™";
+const VOICE_NAME = "YesIn Radio";
 const PRESENCE_LABEL = "Publicité IA";
 
 // --------------------
