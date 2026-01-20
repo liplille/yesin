@@ -151,7 +151,7 @@ export default function ListingPage() {
   // --- Query params: prefill + utm + locks ---
   const query = useMemo(
     () => new URLSearchParams(location.search),
-    [location.search]
+    [location.search],
   );
   const lockEmail = query.get("lock_email") === "1";
   const lockSite = query.get("lock_site") === "1";
@@ -222,14 +222,14 @@ export default function ListingPage() {
             geo: address, // si tu veux, on branche useGeoAddress ici
             utm,
           }),
-        }
+        },
       );
 
       const capJson = await capRes.json().catch(() => ({}));
       if (!capRes.ok) {
         console.error("capture_lead error", capRes.status, capJson);
         throw new Error(
-          capJson?.error || `capture_lead failed (${capRes.status})`
+          capJson?.error || `capture_lead failed (${capRes.status})`,
         );
       }
 
@@ -292,7 +292,7 @@ export default function ListingPage() {
               {
                 icon: CheckCircleIcon,
                 title: "Simple & rapide",
-                desc: "Vous entrez votre site → nous vous guidons pas à pas.",
+                desc: "Entrez votre site ou votre page de réseau social (Insta, LinkedIn, etc.).",
               },
               {
                 icon: ShieldCheckIcon,
@@ -470,19 +470,19 @@ export default function ListingPage() {
               {/* ACTIVITÉ */}
               <div>
                 <label className="text-xs font-semibold opacity-80">
-                  Votre activité
+                  Votre site web ou réseau social
                 </label>
                 <input
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   readOnly={lockSite}
-                  placeholder="votre-site.fr"
+                  placeholder="votre-site.fr ou lien Instagram, LinkedIn..."
                   className="mt-1 w-full rounded-2xl border border-black/10 bg-bg/30 px-4 py-4 text-base font-semibold outline-none placeholder:font-normal placeholder:text-slate-400 dark:placeholder:text-white/60 focus:ring-4 focus:ring-primary/25 dark:border-white/10 dark:bg-black/20"
                   autoComplete="off"
                 />
                 <div className="mt-1 text-[11px] opacity-70">
-                  → Sert à identifier votre activité et créer votre message
-                  publicitaire.
+                  → Copiez l'adresse de votre site ou de votre profil social
+                  principal.
                 </div>
               </div>
 
@@ -645,6 +645,10 @@ export default function ListingPage() {
             {
               q: "À quoi sert exactement mon email ?",
               a: "Votre email sert uniquement à créer votre accès et à vous permettre de poursuivre l’inscription.",
+            },
+            {
+              q: "Je n'ai pas de site web, puis-je utiliser mes réseaux sociaux ?",
+              a: "Absolument. Vous pouvez utiliser le lien de votre profil Instagram, LinkedIn, Facebook ou même votre fiche Google. L'IA analysera votre présence sur ce réseau pour structurer votre message publicitaire.",
             },
           ].map((item, i) => (
             <details
