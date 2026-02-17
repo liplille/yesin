@@ -12,6 +12,7 @@ import ThankYouPage from "./pages/ThankYouPage";
 import AuthCallback from "./pages/AuthCallback";
 import UnsubscribeSuccessPage from "./pages/UnsubscribeSuccessPage";
 import ListingPage from "./pages/ListingPage";
+import DirectoryProfilePage from "./pages/DirectoryProfilePage";
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,14 @@ const router = createBrowserRouter([
         element: (
           <RouteGate mode="any">
             <ListingPage />
+          </RouteGate>
+        ),
+      },
+      {
+        path: "/profil/:slug", // Le ":slug" est la clé magique
+        element: (
+          <RouteGate mode="any">
+            <DirectoryProfilePage />
           </RouteGate>
         ),
       },

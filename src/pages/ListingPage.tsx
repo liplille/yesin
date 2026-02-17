@@ -19,7 +19,7 @@ import {
 // --------------------
 const PRESENCE_NAME = "YesIn Presence™";
 const VOICE_NAME = "YesIn Radio™";
-const PRESENCE_LABEL = "Publicité IA";
+const PRESENCE_LABEL = "Diagnostic IA Gratuit";
 
 // --------------------
 // Helpers
@@ -270,16 +270,15 @@ export default function ListingPage() {
           </div>
 
           <h1 className="mt-4 text-4xl font-extrabold leading-tight md:text-5xl">
-            Faites connaître votre activité dans les{" "}
-            <span className="text-primary">réponses des IA</span>.
+            Savez-vous comment les IA{" "}
+            <span className="text-primary">recommandent</span> votre activité ?
           </h1>
 
           <p className="mt-4 max-w-xl text-lg opacity-80">
-            Les IA deviennent un nouveau canal de publicité. Avec{" "}
-            {PRESENCE_NAME}, vous mettez en avant votre activité et nous la
-            transformons en message clair que les assistants IA (Gemini,
-            ChatGPT, Claude, Perplexity) peuvent recommander quand quelqu’un
-            vous cherche.
+            Les assistants comme ChatGPT ou Gemini analysent votre site pour
+            répondre aux clients. Utilisez {PRESENCE_NAME} pour obtenir votre{" "}
+            <b>Rapport d'Audibilité IA</b> et découvrez vos points forts et vos
+            zones d'ombre.
           </p>
 
           <ul className="mt-6 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
@@ -290,14 +289,14 @@ export default function ListingPage() {
                 desc: "Votre activité est plus souvent recommandée.",
               },
               {
+                icon: SparklesIcon,
+                title: "Score de Confiance",
+                desc: "Mesurez votre niveau de clarté pour les algorithmes IA.",
+              },
+              {
                 icon: CheckCircleIcon,
                 title: "Simple & rapide",
                 desc: "Entrez votre site ou votre page de réseau social (Insta, LinkedIn, etc.).",
-              },
-              {
-                icon: ShieldCheckIcon,
-                title: "Plus rassurant",
-                desc: "Nous mettons en avant les preuves, avis et garanties.",
               },
               {
                 icon: MicrophoneIcon,
@@ -322,11 +321,11 @@ export default function ListingPage() {
             <button
               onClick={handleStart}
               disabled={loading}
-              className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-base font-extrabold text-white shadow-xl hover:opacity-90 disabled:opacity-60"
+              className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-base font-extrabold text-white shadow-xl hover:scale-[1.02] transition-transform disabled:opacity-60"
             >
               {loading
-                ? "Envoi du lien..."
-                : "Créer mon accès et activer ma pub IA →"}
+                ? "Initialisation..."
+                : "Lancer mon diagnostic IA gratuit →"}
             </button>
 
             <a
@@ -457,13 +456,13 @@ export default function ListingPage() {
               </span>
 
               <span>
-                Pour lancer votre{" "}
-                <span className="text-primary">publicité IA</span>
+                Obtenir mon{" "}
+                <span className="text-primary">Rapport d'Analyse IA</span>
               </span>
             </div>
 
-            <div className="text-xs opacity-75">
-              2 infos rapides, nous nous occupons du reste.
+            <div className="text-xs opacity-75 mt-1">
+              Scanner mon site et identifier mes opportunités publicitaires.
             </div>
 
             <div className="mt-4 flex flex-col gap-3">
@@ -509,14 +508,10 @@ export default function ListingPage() {
               <button
                 onClick={handleStart}
                 disabled={loading}
-                className="mt-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-base font-extrabold text-white shadow-xl hover:opacity-90 disabled:opacity-60"
+                className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-base font-extrabold text-white shadow-xl hover:scale-[1.02] transition-transform disabled:opacity-60"
               >
-                {loading
-                  ? "Envoi du lien..."
-                  : "Créer mon accès et activer ma pub IA →"}
+                {loading ? "Scan en cours..." : "Lancer mon analyse gratuite →"}
               </button>
-
-              {error && <div className="text-sm text-red-400">{error}</div>}
             </div>
           </div>
         </aside>
@@ -543,7 +538,7 @@ export default function ListingPage() {
             {[
               {
                 step: "01",
-                t: "Compréhension de votre activité",
+                t: "Diagnostic d'Audibilité",
                 d: "Nous identifions clairement ce que vous faites pour vous faire apparaître dans les bonnes recherches.",
                 icon: "🧠",
                 label: "Clarté",
@@ -551,7 +546,7 @@ export default function ListingPage() {
               {
                 step: "02",
                 t: "Crédibilité par la voix",
-                d: "Votre message audio rassure et donne envie de vous recommander.",
+                d: "Corrigez les zones d'ombre de l'IA en enregistrant votre pitch. Votre voix devient la source de vérité pour les assistants IA.",
                 icon: "🎙️",
                 label: "Confiance",
               },
@@ -611,9 +606,11 @@ export default function ListingPage() {
             <button
               onClick={handleStart}
               disabled={loading}
-              className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-8 py-4 font-black text-white shadow-2xl hover:scale-105 transition-all disabled:opacity-60"
+              className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-8 py-4 font-black text-white shadow-2xl hover:scale-105 transition-all disabled:opacity-60 uppercase tracking-widest text-sm"
             >
-              🚀 ACTIVER MA PUBLICITÉ IA
+              {loading
+                ? "Scan en cours..."
+                : "🚀 Lancer mon diagnostic IA gratuit"}
               <ArrowRightIcon className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
